@@ -14,27 +14,35 @@ Installation
 Usage
 -----
 
-    require "forecaster"
+```ruby
+require "forecaster"
+```
 
 Configure the gem:
 
-    Forecaster.configure do |config|
-      config.cache_dir = "/tmp/forecaster"
-    end
+```ruby
+Forecaster.configure do |config|
+  config.cache_dir = "/tmp/forecaster"
+end
+```
 
 Fetch a forecast:
 
-    y = 2015 # year of GFS run
-    m = 5    # month of GFS run
-    d = 4    # day of GFS run
-    c = 12   # hour of GFS run
-    h = 3    # hour of forecast
-    forecast = Forecaster.fetch(y, m, d, c, h) # Forecaster::Forecast
+```ruby
+y = 2015 # year of GFS run
+m = 5    # month of GFS run
+d = 4    # day of GFS run
+c = 12   # hour of GFS run
+h = 3    # hour of forecast
+forecast = Forecaster.fetch(y, m, d, c, h) # Forecaster::Forecast
+```
 
 Read a [record][1] of a forecast:
 
-    key = :prate
-    value = forecast.read(key, longitude: 48.1147, latitude: -1.6794) # "0.000163"
+```ruby
+key = :prate
+value = forecast.read(key, longitude: 48.1147, latitude: -1.6794) # "0.000163"
+```
 
 [1]: http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs_upgrade/gfs.t06z.pgrb2.0p25.f006.shtml
 
