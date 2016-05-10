@@ -15,7 +15,7 @@ Alternatively you can build the gem from its repository:
     $ git clone git://github.com/vinc/forecaster.git
     $ cd forecaster
     $ gem build forecaster.gemspec
-    $ gem install forecaster-0.0.1.gem
+    $ gem install forecaster-0.0.2.gem
 
 In both cases you need to make sure that you have `curl` and `wgrib2` present
 on your system.
