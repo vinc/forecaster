@@ -10,6 +10,25 @@ Installation
 
     $ gem install forecaster
 
+Alternatively you can build the gem from its repository:
+
+    $ git clone git://github.com/vinc/forecaster.git
+    $ cd forecaster
+    $ gem build forecaster.gemspec
+    $ gem install forecaster-0.0.1.gem
+
+In both cases you need to make sure that you have `curl` and `wgrib2` present
+on your system.
+
+To install the later:
+
+    $ curl -o wgrib2.tgz http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
+    $ tar -xzvf wgrib2.tgz
+    $ cd grib2
+    $ export CC=gcc
+    $ export FC=gfortran
+    $ make
+    $ sudo cp wgrib2/wgrib2 /usr/local/bin/
 
 Usage
 -----
