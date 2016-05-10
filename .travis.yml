@@ -1,8 +1,8 @@
 language: ruby
 rvm:
   - 2.0
-  - 2.3
-script: rspec spec
+  - 2.2
+script: bundle exec rspec spec
 before_install:
   - sudo apt-get install make gcc gfortran
   - curl -o wgrib2.tgz http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
