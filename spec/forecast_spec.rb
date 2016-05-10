@@ -5,6 +5,9 @@ RSpec.describe Forecaster::Forecast do
   before do
     Forecaster.configure do |config|
       config.cache_dir = Dir.mktmpdir
+      config.records = {
+        :pres  => "PRES:surface"
+      }
     end
 
     t = Time.now - 86400
