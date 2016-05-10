@@ -10,64 +10,45 @@ module Forecaster
       @hour_of_forecast = hour_of_forecast
     end
 
-    def read(field, latitude: 0.0, longitude: 0.0)
-      wgrib2_path = Forecaster.configuration.wgrib2_path
-      record = Forecaster.configuration.records[field]
-      cachename = Forecaster.configuration.cache_dir
-
-      filename = "gfs.t%02dz.pgrb2.0p25.f%03d" % [
-        @hour_of_run, @hour_of_forecast
-      ]
-      pathname = "%04d%02d%02d%02d" % [
+    def dirname
+      subdir = "%04d%02d%02d%02d" % [
         @year, @month, @day, @hour_of_run
       ]
-      path = File.join(cachename, pathname, filename)
+      File.join(Forecaster.configuration.cache_dir, subdir)
+    end
 
-      raise "'#{path}' not found" unless File.exists?(path)
+    def filename
+      "gfs.t%02dz.pgrb2.0p25.f%03d" % [
+        @hour_of_run, @hour_of_forecast
+      ]
+    end
 
-      out = `#{wgrib2_path} #{path} -lon #{longitude} #{latitude} -match "#{record}"`
-      lines = out.split("\n")
-      fields = lines.first.split(":")
-      params = Hash[*fields.last.split(",").map { |s| s.split("=") }.flatten]
-
-      params["val"]
+    def url
+      server = Forecaster.configuration.server
+      "%s/gfs.%04d%02d%02d%02d/%s" % [
+        server, @year, @month, @day, @hour_of_run, filename
+      ]
     end
 
     def fetched?
-      cachename = Forecaster.configuration.cache_dir
-      pathname = "%04d%02d%02d%02d" % [
-        @year, @month, @day, @hour_of_run
-      ]
-      filename = "gfs.t%02dz.pgrb2.0p25.f%03d" % [
-        @hour_of_run, @hour_of_forecast
-      ]
-      File.exist?(File.join(cachename, pathname, filename))
+      File.exist?(File.join(dirname, filename))
     end
 
+    # This method will save the forecast file in the cache directory.
+    # But only the parts of the file containing the fields defined in
+    # the configuration will be downloaded.
     def fetch
       return self if fetched?
 
-      server = Forecaster.configuration.server
-      cachename = Forecaster.configuration.cache_dir
-      curl_path = Forecaster.configuration.curl_path
-      curl = "#{curl_path} -f -s -S"
+      curl = Forecaster.configuration.curl_path
 
-      pathname = "%04d%02d%02d%02d" % [
-        @year, @month, @day, @hour_of_run
-      ]
-      FileUtils.mkpath(File.join(cachename, pathname))
+      FileUtils.mkpath(File.join(dirname))
 
-      filename = "gfs.t%02dz.pgrb2.0p25.f%03d" % [
-        @hour_of_run, @hour_of_forecast
-      ]
-      url = "%s/gfs.%04d%02d%02d%02d/%s" % [
-        server, @year, @month, @day, @hour_of_run, filename
-      ]
-      path = File.join(cachename, pathname, filename)
+      path = File.join(dirname, filename)
 
       # puts "Downloading '#{url}.idx' ..."
-      cmd = "#{curl} -o #{path}.idx #{url}.idx"
-      return self unless system(cmd)
+      cmd = "#{curl} -fsS -o #{path}.idx #{url}.idx"
+      raise "Download of '#{url}.idx' failed" unless system(cmd)
 
       lines = IO.readlines("#{path}.idx")
       n = lines.count
@@ -91,10 +72,25 @@ module Forecaster
       system("rm #{path}.idx")
 
       # puts "Downloading '#{url}' ..."
-      cmd = "#{curl} -r #{ranges.join(",")} -o #{path} #{url}"
-      return self unless system(cmd)
+      cmd = "#{curl} -fsS -r #{ranges.join(",")} -o #{path} #{url}"
+      raise "Download of '#{url}' failed" unless system(cmd)
 
       self
+    end
+
+    def read(field, latitude: 0.0, longitude: 0.0)
+      wgrib2 = Forecaster.configuration.wgrib2_path
+      record = Forecaster.configuration.records[field]
+      path = File.join(dirname, filename)
+
+      raise "'#{path}' not found" unless File.exists?(path)
+
+      coords = "#{longitude} #{latitude}"
+      output = `#{wgrib2} #{path} -lon #{coords} -match "#{record}"`
+      fields = output.split("\n").first.split(":")
+      params = Hash[*fields.last.split(",").map { |s| s.split("=") }.flatten]
+
+      params["val"]
     end
   end
 end
