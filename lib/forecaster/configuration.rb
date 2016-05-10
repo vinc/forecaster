@@ -1,11 +1,12 @@
 module Forecaster
   class Configuration
-    attr_accessor :server, :wgrib2, :cache_dir, :records
+    attr_accessor :server, :cache_dir, :curl_path, :wgrib2_path, :records
 
     def initialize
       @server = "http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod"
-      @wgrib2 = "/usr/bin/wgrib2"
       @cache_dir = "/tmp/forecaster"
+      @curl_path = "curl"
+      @wgrib2_path = "wgrib2"
       @records = {
         prate: "PRATE:surface",
         tmp:   "TMP:2 m above ground",

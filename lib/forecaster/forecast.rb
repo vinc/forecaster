@@ -11,7 +11,7 @@ module Forecaster
     end
 
     def read(field, latitude: 0.0, longitude: 0.0)
-      wgrib2 = Forecaster.configuration.wgrib2
+      wgrib2_path = Forecaster.configuration.wgrib2_path
       record = Forecaster.configuration.records[field]
       cachename = Forecaster.configuration.cache_dir
 
@@ -25,7 +25,7 @@ module Forecaster
 
       raise "'#{path}' not found" unless File.exists?(path)
 
-      out = `#{wgrib2} #{path} -lon #{longitude} #{latitude} -match "#{record}"`
+      out = `#{wgrib2_path} #{path} -lon #{longitude} #{latitude} -match "#{record}"`
       lines = out.split("\n")
       fields = lines.first.split(":")
       params = Hash[*fields.last.split(",").map { |s| s.split("=") }.flatten]
@@ -49,7 +49,8 @@ module Forecaster
 
       server = Forecaster.configuration.server
       cachename = Forecaster.configuration.cache_dir
-      curl = "curl -f -s -S"
+      curl_path = Forecaster.configuration.curl_path
+      curl = "#{curl_path} -f -s -S"
 
       pathname = "%04d%02d%02d%02d%" % [
         @year, @month, @day, @hour_of_run

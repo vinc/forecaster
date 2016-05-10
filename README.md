@@ -23,6 +23,8 @@ Configure the gem:
 ```ruby
 Forecaster.configure do |config|
   config.cache_dir = "/tmp/forecaster"
+  config.curl_path = "/usr/bin/curl"
+  config.wgrib2_path = "/usr/local/bin/wgrib2"
 end
 ```
 
