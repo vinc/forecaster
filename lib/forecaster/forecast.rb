@@ -18,7 +18,7 @@ module Forecaster
       filename = "gfs.t%02dz.pgrb2.0p25.f%03d" % [
         @hour_of_run, @hour_of_forecast
       ]
-      pathname = "%04d%02d%02d%02d%" % [
+      pathname = "%04d%02d%02d%02d" % [
         @year, @month, @day, @hour_of_run
       ]
       path = File.join(cachename, pathname, filename)
@@ -35,7 +35,7 @@ module Forecaster
 
     def fetched?
       cachename = Forecaster.configuration.cache_dir
-      pathname = "%04d%02d%02d%02d%" % [
+      pathname = "%04d%02d%02d%02d" % [
         @year, @month, @day, @hour_of_run
       ]
       filename = "gfs.t%02dz.pgrb2.0p25.f%03d" % [
@@ -52,7 +52,7 @@ module Forecaster
       curl_path = Forecaster.configuration.curl_path
       curl = "#{curl_path} -f -s -S"
 
-      pathname = "%04d%02d%02d%02d%" % [
+      pathname = "%04d%02d%02d%02d" % [
         @year, @month, @day, @hour_of_run
       ]
       FileUtils.mkpath(File.join(cachename, pathname))
