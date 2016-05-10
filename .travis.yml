@@ -12,3 +12,4 @@ before_install:
   - export FC=gfortran
   - make
   - sudo cp wgrib2/wgrib2 /usr/local/bin/
+  - cd ..
