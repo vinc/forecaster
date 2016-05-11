@@ -91,10 +91,10 @@ end
 
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
-if verbose && !forecast.fetched?
-  puts "Downloading '#{forecast.url}' ..."
+unless forecast.fetched?
+  puts "Downloading '#{forecast.url}' ..." if verbose
   forecast.fetch
-  puts
+  puts if verbose
 end
 
 format = "%-15s % 7.1f %s"
