@@ -37,35 +37,54 @@ Usage
 require "forecaster"
 ```
 
-Configure the gem:
+To configure the gem:
 
 ```ruby
 Forecaster.configure do |config|
-  config.cache_dir = "/tmp/forecaster"
   config.curl_path = "/usr/bin/curl"
   config.wgrib2_path = "/usr/local/bin/wgrib2"
+  config.cache_dir = "/tmp/forecaster"
+  config.records = {
+    :temperature => ":TMP:2 m above ground:",
+    :humidity    => ":RH:2 m above ground:",
+    :pressure    => ":PRES:surface:"
+  }
 end
 ```
 
-Fetch a forecast:
+Forecaster saves large files containing the data of GFS runs from the NOAA
+servers in the cache directory, but only the parts of the files containing
+the records defined in the configuration will be downloaded.
+
+You can find the list of available records [online][1] or by reading any
+`.idx` files distributed along with the GFS files.
+
+A record is identified by a variable and a layer separated by colon
+characters. In the case of the temperature for example, those attributes
+are `TMP` and `2 m above ground`. See the [documentation of wgrib2][2] for
+more information.
+
+To fetch a forecast:
 
 ```ruby
-y = 2015 # year of GFS run
-m = 5    # month of GFS run
-d = 4    # day of GFS run
-c = 12   # hour of GFS run
-h = 3    # hour of forecast
+t = Time.now.utc # All the dates should be expressed in UTC
+y = t.year       # year of GFS run
+m = t.month      # month of GFS run
+d = t.day        # day of GFS run
+c = 0            # hour of GFS run (must be a multiple of 6)
+h = 12           # hour of forecast (must be a multiple of 3)
 forecast = Forecaster.fetch(y, m, d, c, h) # Forecaster::Forecast
 ```
 
-Read a [record][1] of a forecast:
+To read the [record][1] of a forecast:
 
 ```ruby
-key = :prate
-value = forecast.read(key, longitude: 48.1147, latitude: -1.6794) # "0.000163"
+res = forecast.read(:temperature, longitude: 48.1147, latitude: -1.6794) # String in Kelvin
+val = res.to_f - 273.15 # Float in degree Celsius
 ```
 
 [1]: http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs_upgrade/gfs.t06z.pgrb2.0p25.f006.shtml
+[2]: http://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/
 
 
 License
