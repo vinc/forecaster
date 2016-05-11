@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 
+require "chronic"
 require "forecaster"
 
-usage = "Usage: forecast <latitude> <longitude> [<timestamp>]"
+usage = "Usage: forecast <latitude> <longitude> [<date>]"
 
 verbose = false
 
@@ -27,8 +28,8 @@ if ARGV.size < 2
   exit
 end
 
-lat = Float(ARGV[0])
-lon = Float(ARGV[1])
+lat = Float(ARGV.shift)
+lon = Float(ARGV.shift)
 
 # There is a new GFS run every 6 hours starting at midnight UTC, and it
 # takes approximately 3 to 5 hours before a run is available to download.
@@ -48,8 +49,8 @@ req = now
 acc = 0
 t = now - 6 * 3600
 
-if ARGV.size > 2
-  req = Time.at(Integer(ARGV[2])).utc
+if ARGV.size > 0
+  req = Chronic.parse(ARGV.join(" ")).utc
   if req > now
     acc = (req - now).to_i / 3600
   else
