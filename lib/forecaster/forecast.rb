@@ -87,6 +87,9 @@ module Forecaster
 
       coords = "#{longitude} #{latitude}"
       output = `#{wgrib2} #{path} -lon #{coords} -match "#{record}"`
+
+      raise "Could not read '#{record}' in '#{path}'" if output.empty?
+
       fields = output.split("\n").first.split(":")
       params = Hash[*fields.last.split(",").map { |s| s.split("=") }.flatten]
 
