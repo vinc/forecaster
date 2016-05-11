@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = "forecaster"
-  s.version     = "0.0.2"
-  s.date        = "2016-06-09"
+  s.version     = "0.1.0"
+  s.date        = "2016-06-11"
   s.summary     = "Wrapper around curl and wgrib2 to fetch and read GFS data"
   s.description = s.summary
   s.authors     = [
@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
     "lib/forecaster/configuration.rb",
     "lib/forecaster/forecast.rb"
   ]
+  s.executables << "forecast"
   s.homepage    = "https://github.com/vinc/forecaster"
   s.license     = "MIT"
 end

@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+
+require "forecaster"
+
+usage = "Usage: forecast <latitude> <longitude> [<timestamp>]"
+
+verbose = false
+
+ARGV.delete_if do |arg|
+  case arg
+  when "-h", "--help"
+    puts usage
+    exit
+  when "-v", "--verbose"
+    verbose = true
+
+    true
+  when /--/
+    true
+  else
+    false
+  end
+end
+
+if ARGV.size < 2
+  puts usage
+  exit
+end
+
+lat = Float(ARGV[0])
+lon = Float(ARGV[1])
+
+# There is a new GFS run every 6 hours starting at midnight UTC, and it
+# takes approximately 3 to 5 hours before a run is available to download.
+#
+# So we take current UTC time and deduce the time of the last GFS run by
+# calculating `6 * (h / 6)` where `h` is the current hour. Then we use
+# the previous run to be safe because this one may not be available.
+#
+# There is a forecast for every 3 hours after a run. So we use the
+# number of hours between the run and now to find the closest forecast
+# in the past, and the closest 3 hours from that in the future, and
+# we interpolate the value for the current time.
+
+now = Time.now.utc
+
+req = now
+acc = 0
+t = now - 6 * 3600
+
+if ARGV.size > 2
+  req = Time.at(Integer(ARGV[2])).utc
+  if req > now
+    acc = (req - now).to_i / 3600
+  else
+    acc = -3
+    t = req - 3 * 3600
+  end
+end
+
+y = t.year
+m = t.month
+d = t.day
+c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
+h = 3 * ((t.hour - c + 6 + acc) / 3)
+
+if verbose
+  requested_time = req.localtime
+  gfs_run_time =(t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
+  forecast_time =(t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
+
+  puts "Requested time:  #{requested_time}"
+  puts "GFS Run time:    #{gfs_run_time}"
+  puts "Forecast time:   #{forecast_time}"
+  puts
+end
+
+Forecaster.configure do |config|
+  config.cache_dir = "/tmp/forecaster"
+  config.records = {
+    :prate => ":PRATE:surface:",
+    :pres  => ":PRES:surface:",
+    :rh    => ":RH:2 m above ground:",
+    :tmp   => ":TMP:2 m above ground:",
+    :ugrd  => ":UGRD:10 m above ground:",
+    :vgrd  => ":VGRD:10 m above ground:",
+    :tcdc  => ":TCDC:entire atmosphere:"
+  }
+end
+
+forecast = Forecaster::Forecast.new(y, m, d, c, h)
+
+if verbose && !forecast.fetched?
+  puts "Downloading '#{forecast.url}' ..."
+  forecast.fetch
+  puts
+end
+
+format = "%-15s % 7.1f %s"
+
+pres = forecast.read(:pres, :latitude => lat, :longitude => lon).to_f
+puts format % ["Pressure:", pres / 100.0, "hPa"]
+
+tmp = forecast.read(:tmp, :latitude => lat, :longitude => lon).to_f
+puts format % ["Temperature:", tmp - 273.15, "°C"]
+
+ugrd = forecast.read(:ugrd, :latitude => lat, :longitude => lon).to_f
+vgrd = forecast.read(:vgrd, :latitude => lat, :longitude => lon).to_f
+wind_speed = Math.sqrt(ugrd ** 2 + vgrd ** 2)
+wind_direction = (270 - Math.atan2(ugrd, vgrd) * 180 / Math::PI) % 360
+puts format % ["Wind Speed:", wind_speed, "m/s"]
+puts format % ["Wind Direction:", wind_direction, "°"]
+
+prate = forecast.read(:prate, :latitude => lat, :longitude => lon).to_f
+puts format % ["Precipitation:", prate * 3600, "mm"]
+
+rh = forecast.read(:rh, :latitude => lat, :longitude => lon).to_f
+puts format % ["Humidity:", rh, "%"]
+
+tcdc = forecast.read(:tcdc, :latitude => lat, :longitude => lon).to_f
+puts format % ["Cloud Cover:", tcdc, "%"]
