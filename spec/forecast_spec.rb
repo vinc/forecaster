@@ -6,7 +6,7 @@ RSpec.describe Forecaster::Forecast do
     Forecaster.configure do |config|
       config.cache_dir = Dir.mktmpdir
       config.records = {
-        :pres  => "PRES:surface"
+        :tmp => ":TMP:2 m above ground:" # Temperature
       }
     end
 
@@ -45,7 +45,8 @@ RSpec.describe Forecaster::Forecast do
 
   it "reads a forecast" do
     @forecast.fetch
-    value = @forecast.read(:prate, longitude: 48.1147, latitude: -1.6794)
+    value = @forecast.read(:tmp, longitude: 48.1147, latitude: -1.6794)
     expect(value).to be_a(String)
+    expect(value.to_i).to be_between(180, 340).inclusive # in Kelvin
   end
 end
