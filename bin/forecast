@@ -23,6 +23,7 @@ Forecaster.configure do |config|
   }
 end
 
+FileUtils.mkpath(Forecaster.configuration.cache_dir)
 cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
 store = YAML::Store.new(cache_file)
 

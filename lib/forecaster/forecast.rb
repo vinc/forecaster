@@ -71,7 +71,7 @@ module Forecaster
     end
 
     def fetch_grib2(ranges, progress_block: nil)
-      FileUtils.mkpath(File.join(dirname))
+      FileUtils.mkpath(dirname)
       path = File.join(dirname, filename)
 
       streamer = lambda do |chunk, remaining, total|
