@@ -227,7 +227,7 @@ end
 # Print forecast
 #
 
-puts "Weather Forecast"
+puts "GFS Weather Forecast"
 puts
 
 format = "  %-15s % 7.1f %s"
