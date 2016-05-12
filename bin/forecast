@@ -192,7 +192,7 @@ unless forecast.fetched?
   if opts[:verbose]
     puts "Downloading: '#{forecast.url}'"
 
-    puts "Reading IDX file..."
+    puts "Reading index file..."
     ranges = forecast.fetch_index
 
     filesize = ranges.reduce(0) do |acc, range|
@@ -227,10 +227,15 @@ end
 # Print forecast
 #
 
-puts "Weather forecast for #{forecast.time.localtime}, #{lat}, #{lon}"
+puts "Weather Forecast"
 puts
 
 format = "  %-15s % 7.1f %s"
+
+puts "  Time:      #{forecast.time.localtime}"
+puts format % ["Latitude:", lat, "°"]
+puts format % ["Longitude:", lon, "°"]
+puts
 
 pres = forecast.read(:pres, :latitude => lat, :longitude => lon).to_f
 puts format % ["Pressure:", pres / 100.0, "hPa"]
