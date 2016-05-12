@@ -10,7 +10,7 @@ RSpec.describe Forecaster do
       }
     end
 
-    t = Time.now - 86400
+    t = Time.now - 86_400
     @y = t.year
     @m = t.month
     @d = t.day
@@ -48,7 +48,7 @@ RSpec.describe Forecaster do
       forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
 
       forecast.fetch
-      value = forecast.read(:tmp, longitude: 48.1147, latitude: -1.6794)
+      value = forecast.read(:tmp, :longitude => 48.1147, :latitude => -1.6794)
       expect(value).to be_a(String)
       expect(value.to_i).to be_between(180, 340).inclusive # in Kelvin
     end

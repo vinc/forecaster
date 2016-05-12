@@ -26,12 +26,11 @@ end
 cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
 store = YAML::Store.new(cache_file)
 
-
 #
 # Parse command line options
 #
 
-opts = Trollop::options do
+opts = Trollop.options do
   opt :verbose,   "verbose mode"
   opt :latitude,  "latitude in decimal degree",  :type => Float
   opt :longitude, "longitude in decimal degree", :type => Float
@@ -53,7 +52,6 @@ ARGV.each do |word|
 end
 opts[:time] ||= cmd_opts[:time].join(" ")
 opts[:location] ||= cmd_opts[:location].join(" ")
-
 
 #
 # Get location
@@ -98,7 +96,6 @@ if lat.nil? || lon.nil?
   exit
 end
 
-
 #
 # Get timezone
 #
@@ -110,10 +107,9 @@ if ENV["GEONAMES_USERNAME"]
   end
   store.transaction do
     key = "timezone:#{lat}:#{lon}"
-    ENV["TZ"] = store[key] || store[key] = Timezone::lookup(lat, lon).name
+    ENV["TZ"] = store[key] || store[key] = Timezone.lookup(lat, lon).name
   end
 end
-
 
 #
 # Get time
@@ -172,15 +168,14 @@ end
 
 if opts[:verbose]
   requested_time = req.localtime
-  gfs_run_time =(t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
-  forecast_time =(t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
+  gfs_run_time   = (t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
+  forecast_time  = (t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
 
   puts "Requested time:  #{requested_time}"
   puts "GFS Run time:    #{gfs_run_time}"
   puts "Forecast time:   #{forecast_time}"
   puts
 end
-
 
 #
 # Get forecast
@@ -213,7 +208,7 @@ unless forecast.fetched?
       progressbar.progress = progress
     end
 
-    forecast.fetch_grib2(ranges, progress_block: progress_block)
+    forecast.fetch_grib2(ranges, :progress_block => progress_block)
 
     progressbar.finish
     puts
@@ -222,7 +217,6 @@ unless forecast.fetched?
   end
 end
 
-
 #
 # Print forecast
 #
@@ -230,36 +224,39 @@ end
 puts "GFS Weather Forecast"
 puts
 
-format = "  %-15s % 7.1f %s"
+FORMAT = "  %-15s % 7.1f %s".freeze
 
-puts "  %-11s % 11s" % ["Date:", forecast.time.localtime.strftime("%Y-%m-%d")]
-puts "  %-11s % 11s" % ["Time:", forecast.time.localtime.strftime("%T")]
-puts "  %-11s % 11s" % ["Zone:", forecast.time.localtime.strftime("%z")]
-puts format % ["Latitude:", lat, "°"]
-puts format % ["Longitude:", lon, "°"]
+forecast_time = forecast.time.localtime
+
+puts format("  %-11s % 11s", "Date:", forecast_time.strftime("%Y-%m-%d"))
+puts format("  %-11s % 11s", "Time:", forecast_time.strftime("%T"))
+puts format("  %-11s % 11s", "Zone:", forecast_time.strftime("%z"))
+puts format(FORMAT, "Latitude:",  lat, "°")
+puts format(FORMAT, "Longitude:", lon, "°")
 puts
 
-pres = forecast.read(:pres, :latitude => lat, :longitude => lon).to_f
-puts format % ["Pressure:", pres / 100.0, "hPa"]
-
-tmp = forecast.read(:tmp, :latitude => lat, :longitude => lon).to_f
-puts format % ["Temperature:", tmp - 273.15, "°C"]
-
-ugrd = forecast.read(:ugrd, :latitude => lat, :longitude => lon).to_f
-vgrd = forecast.read(:vgrd, :latitude => lat, :longitude => lon).to_f
-wind_speed = Math.sqrt(ugrd ** 2 + vgrd ** 2)
-wind_direction = (270 - Math.atan2(ugrd, vgrd) * 180 / Math::PI) % 360
-puts format % ["Wind Speed:", wind_speed, "m/s"]
-puts format % ["Wind Direction:", wind_direction, "°"]
-
+pres  = forecast.read(:pres,  :latitude => lat, :longitude => lon).to_f
+tmp   = forecast.read(:tmp,   :latitude => lat, :longitude => lon).to_f
+ugrd  = forecast.read(:ugrd,  :latitude => lat, :longitude => lon).to_f
+vgrd  = forecast.read(:vgrd,  :latitude => lat, :longitude => lon).to_f
 prate = forecast.read(:prate, :latitude => lat, :longitude => lon).to_f
-puts format % ["Precipitation:", prate * 3600, "mm"]
+rh    = forecast.read(:rh,    :latitude => lat, :longitude => lon).to_f
+tcdc  = forecast.read(:tcdc,  :latitude => lat, :longitude => lon).to_f
 
-rh = forecast.read(:rh, :latitude => lat, :longitude => lon).to_f
-puts format % ["Humidity:", rh, "%"]
+pressure       = pres / 100.0
+temperature    = tmp - 273.15
+wind_speed     = Math.sqrt(ugrd**2 + vgrd**2)
+wind_direction = (270 - Math.atan2(ugrd, vgrd) * 180 / Math::PI) % 360
+precipitation  = prate * 3600
+humidity       = rh
+cloud_cover    = tcdc
 
-tcdc = forecast.read(:tcdc, :latitude => lat, :longitude => lon).to_f
-puts format % ["Cloud Cover:", tcdc, "%"]
-
+puts format(FORMAT, "Pressure:",       pressure,       "hPa")
+puts format(FORMAT, "Temperature:",    temperature,    "°C")
+puts format(FORMAT, "Wind Speed:",     wind_speed,     "m/s")
+puts format(FORMAT, "Wind Direction:", wind_direction, "°")
+puts format(FORMAT, "Precipitation:",  precipitation,  "mm")
+puts format(FORMAT, "Humidity:",       humidity,       "%")
+puts format(FORMAT, "Cloud Cover:",    cloud_cover,    "%")
 
 ENV["TZ"] = old_tz

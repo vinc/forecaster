@@ -16,23 +16,18 @@ module Forecaster
     end
 
     def dirname
-      subdir = "%04d%02d%02d%02d" % [
-        @year, @month, @day, @hour_of_run
-      ]
+      subdir = format("%04d%02d%02d%02d", @year, @month, @day, @hour_of_run)
       File.join(Forecaster.configuration.cache_dir, subdir)
     end
 
     def filename
-      "gfs.t%02dz.pgrb2.0p25.f%03d" % [
-        @hour_of_run, @hour_of_forecast
-      ]
+      format("gfs.t%02dz.pgrb2.0p25.f%03d", @hour_of_run, @hour_of_forecast)
     end
 
     def url
       server = Forecaster.configuration.server
-      "%s/gfs.%04d%02d%02d%02d/%s" % [
-        server, @year, @month, @day, @hour_of_run, filename
-      ]
+      subdir = format("gfs.%04d%02d%02d%02d", @year, @month, @day, @hour_of_run)
+      format("%s/%s/%s", server, subdir, filename)
     end
 
     def fetched?
@@ -43,10 +38,9 @@ module Forecaster
     # But only the parts of the file containing the fields defined in
     # the configuration will be downloaded.
     def fetch
-      unless fetched?
-        ranges = fetch_index
-        fetch_grib2(ranges)
-      end
+      return if fetched?
+      ranges = fetch_index
+      fetch_grib2(ranges)
     end
 
     def fetch_index
@@ -57,8 +51,6 @@ module Forecaster
       end
 
       lines = res.body.lines
-      n = lines.count
-
       lines.each_index.reduce([]) do |r, i|
         records = Forecaster.configuration.records
         if records.values.any? { |record| lines[i].include?(record) }
@@ -66,7 +58,7 @@ module Forecaster
           last = ""
 
           j = i
-          while (j += 1) < n
+          while (j += 1) < lines.count
             last = lines[j].split(":")[1].to_i - 1
             break if last != first - 1
           end
@@ -83,15 +75,11 @@ module Forecaster
       path = File.join(dirname, filename)
 
       streamer = lambda do |chunk, remaining, total|
-        File.open(path, "ab") do |f|
-          f.write(chunk)
-        end
-        if progress_block
-          progress_block.call(total - remaining, total)
-        end
+        File.open(path, "ab") { |f| f.write(chunk) }
+        progress_block.call(total - remaining, total) if progress_block
       end
 
-      headers = { "Range" => "bytes=#{ranges.join(",")}" }
+      headers = { "Range" => "bytes=#{ranges.join(',')}" }
       begin
         Excon.get(url, :headers => headers, :response_block => streamer)
       rescue Excon::Errors::Error => e
@@ -105,7 +93,7 @@ module Forecaster
       record = Forecaster.configuration.records[field]
       path = File.join(dirname, filename)
 
-      raise "'#{path}' not found" unless File.exists?(path)
+      raise "'#{path}' not found" unless File.exist?(path)
 
       coords = "#{longitude} #{latitude}"
       output = `#{wgrib2} #{path} -lon #{coords} -match "#{record}"`
