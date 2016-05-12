@@ -26,13 +26,10 @@ end
 cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
 store = YAML::Store.new(cache_file)
 
-#opts = Slop.parse do |opt|
-#  opt.bool("-v", "--verbose", "enable verbose mode")
-#  opt.float("--latitude", "latitude in decimal degree")
-#  opt.float("--longitude", "longitude in decimal degree")
-#  opt.array("--time", "when", :default => [])
-#  opt.array("--location", "when", :default => [])
-#end
+
+#
+# Parse command line options
+#
 
 opts = Trollop::options do
   opt :verbose,   "verbose mode"
@@ -57,26 +54,54 @@ end
 opts[:time] ||= cmd_opts[:time].join(" ")
 opts[:location] ||= cmd_opts[:location].join(" ")
 
-lat = opts[:latitude] || ENV["FORECAST_LATITUDE"]
-lon = opts[:longitude] || ENV["FORECAST_LONGITUDE"]
-if opts[:location].size > 0
+
+#
+# Get location
+#
+
+def geolocalize(location)
   Geocoder.configure(:timeout => 10)
+  res = Geocoder.search(location).first
+  [res.latitude, res.longitude] if res
+end
+
+# 1. From environment variables
+lat = ENV["FORECAST_LATITUDE"]
+lon = ENV["FORECAST_LONGITUDE"]
+
+# 2. From `location` option
+if opts[:location]
   store.transaction do
-    loc = opts[:location]
-    key = "geocoder:#{loc}"
+    puts "Geolocalizing:   '#{opts[:location]}'" if opts[:verbose]
 
-    # Lookup the location only if not already in cache
-    store[key] ||= (geo = Geocoder.search(loc).first) ? geo.data : nil
+    key = "geocoder:#{opts[:location]}"
+    lat, lon = store[key] ||= geolocalize(opts[:location])
 
-    lat ||= store[key]["geometry"]["location"]["lat"]
-    lon ||= store[key]["geometry"]["location"]["lng"]
+    if opts[:verbose]
+      if lat && lon
+        puts "Found:           #{lat}, #{lon}\n\n"
+      else
+        puts "Not found\n\n"
+      end
+    end
   end
+end
+
+# 3. From `latitude` and `longitude` options
+if opts[:latitude] && opts[:longitude]
+  lat = opts[:latitude]
+  lon = opts[:longitude]
 end
 
 if lat.nil? || lon.nil?
   puts "Usage: forecast for <time> in <location>"
   exit
 end
+
+
+#
+# Get timezone
+#
 
 old_tz = ENV["TZ"]
 if ENV["GEONAMES_USERNAME"]
@@ -89,17 +114,26 @@ if ENV["GEONAMES_USERNAME"]
   end
 end
 
-# There is a new GFS run every 6 hours starting at midnight UTC, and it
-# takes approximately 3 to 5 hours before a run is available to download.
+
 #
-# So we take current UTC time and deduce the time of the last GFS run by
-# calculating `6 * (h / 6)` where `h` is the current hour. Then we use
+# Get time
+#
+
+# There is a new GFS run every 6 hours starting at midnight UTC, and it
+# takes approximately 3 to 5 hours before a run is available online.
+#
+# So we take current time in UTC and deduce the time of the last GFS run
+# by calculating `6 * (h / 6)` where `h` is the current hour. Then we use
 # the previous run to be safe because this one may not be available.
 #
 # There is a forecast for every 3 hours after a run. So we use the
 # number of hours between the run and now to find the closest forecast
 # in the past, and the closest 3 hours from that in the future, and
 # we interpolate the value for the current time.
+#
+# TODO: At the moment we only use the last forecast before the requested
+# time, we need to use the next if its closest, or interpolate between the
+# two as explained above.
 
 now = Time.now.utc
 
@@ -108,7 +142,7 @@ req = now
 a = 0
 t = now - 6 * 3600
 
-if opts[:time].size > 0
+if opts[:time]
   # TODO: Check if arg is a timestamp first
   arg = Chronic.parse(opts[:time])
   if arg.nil?
@@ -129,7 +163,12 @@ y = t.year
 m = t.month
 d = t.day
 c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
-h = 3 * ((t.hour - c + 6 + a) / 3) # TODO: Get the next forecast if closer
+h = 3 * ((t.hour - c + 6 + a) / 3) # hour of the forecast (3, 6, 9, ... 384)
+
+if h > 384
+  puts "Error: date too far in the future"
+  exit
+end
 
 if opts[:verbose]
   requested_time = req.localtime
@@ -143,6 +182,11 @@ if opts[:verbose]
 end
 
 ENV["TZ"] = old_tz
+
+
+#
+# Get forecast
+#
 
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
@@ -179,6 +223,11 @@ unless forecast.fetched?
     forecast.fetch # That's a lot easier ^^
   end
 end
+
+
+#
+# Print forecast
+#
 
 format = "%-15s % 7.1f %s"
 
