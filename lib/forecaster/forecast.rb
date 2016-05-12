@@ -1,5 +1,5 @@
 require "fileutils"
-require "faraday"
+require "excon"
 
 module Forecaster
   class Forecast
@@ -42,10 +42,9 @@ module Forecaster
       return self if fetched?
 
       #puts "Downloading '#{url}.idx' ..."
-      con = Faraday.new
       begin
-        res = con.get("#{url}.idx")
-      rescue Faraday::Error
+        res = Excon.get("#{url}.idx")
+      rescue Excon::Errors::Error
         raise "Download of '#{url}.idx' failed"
       end
 
@@ -75,17 +74,23 @@ module Forecaster
       #end
       #n = (filesize.to_f / (1 << 20)).round(2)
       #puts "Downloading #{n} Mb from '#{url}' ..."
-      con.headers = { "Range" => "bytes=#{ranges.join(",")}" }
-      begin
-        res = con.get(url)
-      rescue Faraday::Error
-        raise "Download of '#{url}' failed"
-      end
 
       FileUtils.mkpath(File.join(dirname))
       path = File.join(dirname, filename)
-      File.open(path, "wb") do |f|
-        f.write(res.body)
+
+      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+        File.open(path, "ab") do |f|
+          f.write(chunk)
+        end
+        #downloaded_percent = 100 * (1 - remaining_bytes.to_f / total_bytes)
+        #puts "Downloading: #{downloaded_percent} %"
+      end
+
+      headers = { "Range" => "bytes=#{ranges.join(",")}" }
+      begin
+        res = Excon.get(url, :headers => headers, :response_block => streamer)
+      rescue Excon::Errors::Error
+        raise "Download of '#{url}' failed"
       end
 
       self
