@@ -1,35 +1,52 @@
 #!/usr/bin/env ruby
 
+require "slop"
 require "chronic"
+require "timezone"
+require "geocoder"
 require "forecaster"
 
-usage = "Usage: forecast <latitude> <longitude> [<date>]"
 
-verbose = false
+opts = Slop.parse do |opt|
+  opt.bool("-v", "--verbose", "enable verbose mode")
+  opt.float("--latitude", "latitude in decimal degree")
+  opt.float("--longitude", "longitude in decimal degree")
+  opt.array("--time", "when", :default => [])
+  opt.array("--location", "when", :default => [])
+end
 
-ARGV.delete_if do |arg|
-  case arg
-  when "-h", "--help"
-    puts usage
-    exit
-  when "-v", "--verbose"
-    verbose = true
-
-    true
-  when /--/
-    true
+key = :time
+opts.args.each do |word|
+  case word
+  when "for"
+    key = :time
+  when "in"
+    key = :location
   else
-    false
+    opts[key] << word
   end
 end
 
-if ARGV.size < 2
-  puts usage
+lat = opts[:latitude] || ENV["FORECAST_LATITUDE"]
+lon = opts[:longitude] || ENV["FORECAST_LONGITUDE"]
+if opts[:location].size > 0
+  Geocoder.configure(:timeout => 10)
+  location = Geocoder.search(opts[:location].join(" ")).first
+  lat ||= location.latitude
+  lon ||= location.longitude
+end
+if lat.nil? || lon.nil?
+  puts "Usage: forecast for <time> in <location>"
   exit
 end
 
-lat = Float(ARGV.shift)
-lon = Float(ARGV.shift)
+old_tz = ENV["TZ"]
+if ENV["GEONAMES_USERNAME"]
+  Timezone::Lookup.config(:geonames) do |config|
+    config.username = ENV["GEONAMES_USERNAME"]
+  end
+  ENV["TZ"] = Timezone::lookup(lat, lon).name
+end
 
 # There is a new GFS run every 6 hours starting at midnight UTC, and it
 # takes approximately 3 to 5 hours before a run is available to download.
@@ -49,8 +66,15 @@ req = now
 acc = 0
 t = now - 6 * 3600
 
-if ARGV.size > 0
-  req = Chronic.parse(ARGV.join(" ")).utc
+if opts[:time].size > 0
+  # TODO: Check if arg is a timestamp first
+  arg = Chronic.parse(opts[:time].join(" "))
+  if arg.nil?
+    puts "Error: could not parse time"
+    exit
+  end
+  req = arg.utc
+
   if req > now
     acc = (req - now).to_i / 3600
   else
@@ -65,7 +89,7 @@ d = t.day
 c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
 h = 3 * ((t.hour - c + 6 + acc) / 3)
 
-if verbose
+if opts[:verbose]
   requested_time = req.localtime
   gfs_run_time =(t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
   forecast_time =(t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
@@ -75,6 +99,8 @@ if verbose
   puts "Forecast time:   #{forecast_time}"
   puts
 end
+
+ENV["TZ"] = old_tz
 
 Forecaster.configure do |config|
   config.cache_dir = "/tmp/forecaster"
@@ -92,9 +118,9 @@ end
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
 unless forecast.fetched?
-  puts "Downloading '#{forecast.url}' ..." if verbose
+  puts "Downloading '#{forecast.url}' ..." if opts[:verbose]
   forecast.fetch
-  puts if verbose
+  puts if opts[:verbose]
 end
 
 format = "%-15s % 7.1f %s"

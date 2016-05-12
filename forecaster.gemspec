@@ -14,6 +14,10 @@ Gem::Specification.new do |s|
     "lib/forecaster/forecast.rb"
   ]
   s.executables << "forecast"
+  s.add_runtime_dependency "slop",     "~> 4.3",  ">= 4.3.0"
+  s.add_runtime_dependency "chronic",  "~> 0.10", ">= 0.10.0"
+  s.add_runtime_dependency "timezone", "~> 0.99", ">= 0.99.0"
+  s.add_runtime_dependency "geocoder", "~> 1.3",  ">= 1.3.0"
   s.homepage    = "https://github.com/vinc/forecaster"
   s.license     = "MIT"
 end
