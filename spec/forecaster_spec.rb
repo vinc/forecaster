@@ -1,7 +1,7 @@
 require "tmpdir"
 require "fileutils"
 
-RSpec.describe Forecaster::Forecast do
+RSpec.describe Forecaster do
   before do
     Forecaster.configure do |config|
       config.cache_dir = Dir.mktmpdir
@@ -11,12 +11,11 @@ RSpec.describe Forecaster::Forecast do
     end
 
     t = Time.now - 86400
-    y = t.year
-    m = t.month
-    d = t.day
-    c = 0 # hour of GFS run
-    h = 3 # hour of forecast
-    @forecast = Forecaster::Forecast.new(y, m, d, c, h)
+    @y = t.year
+    @m = t.month
+    @d = t.day
+    @c = 0 # hour of GFS run
+    @h = 3 # hour of forecast
   end
 
   after do
@@ -31,15 +30,27 @@ RSpec.describe Forecaster::Forecast do
   end
 
   it "fetches a forecast" do
-    expect(@forecast.fetched?).to be false
-    @forecast.fetch
-    expect(@forecast.fetched?).to be true
+    forecast = Forecaster.fetch(@y, @m, @d, @c, @h)
+
+    expect(forecast.fetched?).to be true
   end
 
-  it "reads a forecast" do
-    @forecast.fetch
-    value = @forecast.read(:tmp, longitude: 48.1147, latitude: -1.6794)
-    expect(value).to be_a(String)
-    expect(value.to_i).to be_between(180, 340).inclusive # in Kelvin
+  describe Forecaster::Forecast do
+    it "fetches a forecast" do
+      forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
+
+      expect(forecast.fetched?).to be false
+      forecast.fetch
+      expect(forecast.fetched?).to be true
+    end
+
+    it "reads a forecast" do
+      forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
+
+      forecast.fetch
+      value = forecast.read(:tmp, longitude: 48.1147, latitude: -1.6794)
+      expect(value).to be_a(String)
+      expect(value.to_i).to be_between(180, 340).inclusive # in Kelvin
+    end
   end
 end
