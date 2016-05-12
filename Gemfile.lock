@@ -18,6 +18,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
+    ruby-progressbar (1.8.0)
     timezone (0.99.2)
     trollop (2.1.2)
 
@@ -29,6 +30,7 @@ DEPENDENCIES
   excon
   geocoder
   rspec
+  ruby-progressbar
   timezone
   trollop
 

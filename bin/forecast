@@ -142,8 +142,8 @@ ENV["TZ"] = old_tz
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
 unless forecast.fetched?
-  puts "Downloading '#{forecast.url}' ..." if opts[:verbose]
-  forecast.fetch
+  puts "Downloading: '#{forecast.url}'" if opts[:verbose]
+  forecast.fetch(verbose: opts[:verbose])
   puts if opts[:verbose]
 end
 

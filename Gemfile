@@ -8,6 +8,7 @@ gem "timezone"
 gem "geocoder"
 
 gem "excon"
+gem "ruby-progressbar"
 
 group :test do
   gem "rspec"

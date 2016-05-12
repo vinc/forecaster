@@ -1,5 +1,6 @@
 require "fileutils"
 require "excon"
+require "ruby-progressbar"
 
 module Forecaster
   class Forecast
@@ -38,10 +39,12 @@ module Forecaster
     # This method will save the forecast file in the cache directory.
     # But only the parts of the file containing the fields defined in
     # the configuration will be downloaded.
-    def fetch
+    #
+    # TODO: Move the progress bar to the executable
+    def fetch(verbose: false)
       return self if fetched?
 
-      #puts "Downloading '#{url}.idx' ..."
+      puts "Reading IDX file..." if verbose
       begin
         res = Excon.get("#{url}.idx")
       rescue Excon::Errors::Error
@@ -68,30 +71,42 @@ module Forecaster
         end
       end
 
-      #filesize = ranges.reduce(0) do |acc, range|
-      #  first, last = range.split("-").map(&:to_i)
-      #  acc + last - first
-      #end
-      #n = (filesize.to_f / (1 << 20)).round(2)
-      #puts "Downloading #{n} Mb from '#{url}' ..."
+      if verbose
+        filesize = ranges.reduce(0) do |acc, range|
+          first, last = range.split("-").map(&:to_i)
+          acc + last - first
+        end
+        n = (filesize.to_f / (1 << 20)).round(2)
+        puts "Length: #{filesize} (#{n}M)"
+        puts
+      end
 
       FileUtils.mkpath(File.join(dirname))
       path = File.join(dirname, filename)
 
-      streamer = lambda do |chunk, remaining_bytes, total_bytes|
+      progressbar = ProgressBar.create(
+        :format => "%p%% [%b>%i] %r KB/s %e",
+        :rate_scale => lambda { |rate| rate / 1024 }
+      ) if verbose
+
+      streamer = lambda do |chunk, remaining, total|
         File.open(path, "ab") do |f|
           f.write(chunk)
         end
-        #downloaded_percent = 100 * (1 - remaining_bytes.to_f / total_bytes)
-        #puts "Downloading: #{downloaded_percent} %"
+        if verbose
+          progressbar.total = total
+          progressbar.progress = total - remaining
+        end
       end
 
       headers = { "Range" => "bytes=#{ranges.join(",")}" }
       begin
         res = Excon.get(url, :headers => headers, :response_block => streamer)
-      rescue Excon::Errors::Error
-        raise "Download of '#{url}' failed"
+      rescue Excon::Errors::Error => e
+        File.delete(path)
+        raise "Download of '#{url}' failed: #{e}"
       end
+      progressbar.finish if verbose
 
       self
     end
