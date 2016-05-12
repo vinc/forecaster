@@ -2,7 +2,8 @@
 
 require "yaml/store"
 
-require "slop"
+#require "slop"
+require "trollop"
 require "chronic"
 require "timezone"
 require "geocoder"
@@ -25,32 +26,43 @@ end
 cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
 store = YAML::Store.new(cache_file)
 
-opts = Slop.parse do |opt|
-  opt.bool("-v", "--verbose", "enable verbose mode")
-  opt.float("--latitude", "latitude in decimal degree")
-  opt.float("--longitude", "longitude in decimal degree")
-  opt.array("--time", "when", :default => [])
-  opt.array("--location", "when", :default => [])
+#opts = Slop.parse do |opt|
+#  opt.bool("-v", "--verbose", "enable verbose mode")
+#  opt.float("--latitude", "latitude in decimal degree")
+#  opt.float("--longitude", "longitude in decimal degree")
+#  opt.array("--time", "when", :default => [])
+#  opt.array("--location", "when", :default => [])
+#end
+
+opts = Trollop::options do
+  opt :verbose,   "verbose mode"
+  opt :latitude,  "latitude in decimal degree",  :type => Float
+  opt :longitude, "longitude in decimal degree", :type => Float
+  opt :time,      "when",                        :type => String
+  opt :location,  "where",                       :type => String
 end
 
+cmd_opts = { :time => [], :location => [] }
 key = :time
-opts.args.each do |word|
+ARGV.each do |word|
   case word
   when "for"
     key = :time
   when "in"
     key = :location
   else
-    opts[key] << word
+    cmd_opts[key] << word
   end
 end
+opts[:time] ||= cmd_opts[:time].join(" ")
+opts[:location] ||= cmd_opts[:location].join(" ")
 
 lat = opts[:latitude] || ENV["FORECAST_LATITUDE"]
 lon = opts[:longitude] || ENV["FORECAST_LONGITUDE"]
 if opts[:location].size > 0
   Geocoder.configure(:timeout => 10)
   store.transaction do
-    location = opts[:location].join(" ")
+    location = opts[:location]
     key = "geocoder:#{location}"
     res = store[key] || store[key] = Geocoder.search(location).first.data
     lat ||= res["geometry"]["location"]["lat"]
@@ -93,7 +105,7 @@ t = now - 6 * 3600
 
 if opts[:time].size > 0
   # TODO: Check if arg is a timestamp first
-  arg = Chronic.parse(opts[:time].join(" "))
+  arg = Chronic.parse(opts[:time])
   if arg.nil?
     puts "Error: could not parse time"
     exit
