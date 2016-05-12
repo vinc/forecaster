@@ -1,11 +1,29 @@
 #!/usr/bin/env ruby
 
+require "yaml/store"
+
 require "slop"
 require "chronic"
 require "timezone"
 require "geocoder"
+
 require "forecaster"
 
+Forecaster.configure do |config|
+  config.cache_dir = "/tmp/forecaster"
+  config.records = {
+    :prate => ":PRATE:surface:",
+    :pres  => ":PRES:surface:",
+    :rh    => ":RH:2 m above ground:",
+    :tmp   => ":TMP:2 m above ground:",
+    :ugrd  => ":UGRD:10 m above ground:",
+    :vgrd  => ":VGRD:10 m above ground:",
+    :tcdc  => ":TCDC:entire atmosphere:"
+  }
+end
+
+cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
+store = YAML::Store.new(cache_file)
 
 opts = Slop.parse do |opt|
   opt.bool("-v", "--verbose", "enable verbose mode")
@@ -31,9 +49,13 @@ lat = opts[:latitude] || ENV["FORECAST_LATITUDE"]
 lon = opts[:longitude] || ENV["FORECAST_LONGITUDE"]
 if opts[:location].size > 0
   Geocoder.configure(:timeout => 10)
-  location = Geocoder.search(opts[:location].join(" ")).first
-  lat ||= location.latitude
-  lon ||= location.longitude
+  store.transaction do
+    location = opts[:location].join(" ")
+    key = "geocoder:#{location}"
+    res = store[key] || store[key] = Geocoder.search(location).first.data
+    lat ||= res["geometry"]["location"]["lat"]
+    lon ||= res["geometry"]["location"]["lng"]
+  end
 end
 if lat.nil? || lon.nil?
   puts "Usage: forecast for <time> in <location>"
@@ -45,7 +67,10 @@ if ENV["GEONAMES_USERNAME"]
   Timezone::Lookup.config(:geonames) do |config|
     config.username = ENV["GEONAMES_USERNAME"]
   end
-  ENV["TZ"] = Timezone::lookup(lat, lon).name
+  store.transaction do
+    key = "timezone:#{lat}:#{lon}"
+    ENV["TZ"] = store[key] || store[key] = Timezone::lookup(lat, lon).name
+  end
 end
 
 # There is a new GFS run every 6 hours starting at midnight UTC, and it
@@ -101,19 +126,6 @@ if opts[:verbose]
 end
 
 ENV["TZ"] = old_tz
-
-Forecaster.configure do |config|
-  config.cache_dir = "/tmp/forecaster"
-  config.records = {
-    :prate => ":PRATE:surface:",
-    :pres  => ":PRES:surface:",
-    :rh    => ":RH:2 m above ground:",
-    :tmp   => ":TMP:2 m above ground:",
-    :ugrd  => ":UGRD:10 m above ground:",
-    :vgrd  => ":VGRD:10 m above ground:",
-    :tcdc  => ":TCDC:entire atmosphere:"
-  }
-end
 
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
