@@ -2,11 +2,11 @@
 
 require "yaml/store"
 
-#require "slop"
 require "trollop"
 require "chronic"
 require "timezone"
 require "geocoder"
+require "ruby-progressbar"
 
 require "forecaster"
 
@@ -99,8 +99,9 @@ end
 
 now = Time.now.utc
 
+# TODO: Find better names
 req = now
-acc = 0
+a = 0
 t = now - 6 * 3600
 
 if opts[:time].size > 0
@@ -113,9 +114,9 @@ if opts[:time].size > 0
   req = arg.utc
 
   if req > now
-    acc = (req - now).to_i / 3600
+    a = (req - now).to_i / 3600
   else
-    acc = -3
+    a = -3
     t = req - 3 * 3600
   end
 end
@@ -124,7 +125,7 @@ y = t.year
 m = t.month
 d = t.day
 c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
-h = 3 * ((t.hour - c + 6 + acc) / 3) # TODO: Get the next forecast if closer
+h = 3 * ((t.hour - c + 6 + a) / 3) # TODO: Get the next forecast if closer
 
 if opts[:verbose]
   requested_time = req.localtime
@@ -142,9 +143,37 @@ ENV["TZ"] = old_tz
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
 unless forecast.fetched?
-  puts "Downloading: '#{forecast.url}'" if opts[:verbose]
-  forecast.fetch(verbose: opts[:verbose])
-  puts if opts[:verbose]
+  if opts[:verbose]
+    puts "Downloading: '#{forecast.url}'"
+
+    puts "Reading IDX file..."
+    ranges = forecast.fetch_index
+
+    filesize = ranges.reduce(0) do |acc, range|
+      first, last = range.split("-").map(&:to_i)
+      acc + last - first
+    end
+    filesize_in_megabytes = (filesize.to_f / (1 << 20)).round(2)
+    puts "Length: #{filesize} (#{filesize_in_megabytes}M)"
+    puts
+
+    progressbar = ProgressBar.create(
+      :format => "%p%% [%b>%i] %r KB/s %e",
+      :rate_scale => lambda { |rate| rate / 1024 }
+    )
+
+    progress_block = lambda do |progress, total|
+      progressbar.total = total
+      progressbar.progress = progress
+    end
+
+    forecast.fetch_grib2(ranges, progress_block: progress_block)
+
+    progressbar.finish
+    puts
+  else
+    forecast.fetch # That's a lot easier ^^
+  end
 end
 
 format = "%-15s % 7.1f %s"
