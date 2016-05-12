@@ -181,8 +181,6 @@ if opts[:verbose]
   puts
 end
 
-ENV["TZ"] = old_tz
-
 
 #
 # Get forecast
@@ -229,6 +227,9 @@ end
 # Print forecast
 #
 
+puts "Weather forecast for #{forecast.time.localtime}, #{lat}, #{lon}"
+puts
+
 format = "%-15s % 7.1f %s"
 
 pres = forecast.read(:pres, :latitude => lat, :longitude => lon).to_f
@@ -252,3 +253,6 @@ puts format % ["Humidity:", rh, "%"]
 
 tcdc = forecast.read(:tcdc, :latitude => lat, :longitude => lon).to_f
 puts format % ["Cloud Cover:", tcdc, "%"]
+
+
+ENV["TZ"] = old_tz

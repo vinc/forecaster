@@ -11,6 +11,10 @@ module Forecaster
       @hour_of_forecast = hour_of_forecast
     end
 
+    def time
+      Time.utc(@year, @month, @day, @hour_of_forecast)
+    end
+
     def dirname
       subdir = "%04d%02d%02d%02d" % [
         @year, @month, @day, @hour_of_run
