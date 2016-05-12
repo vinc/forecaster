@@ -232,7 +232,9 @@ puts
 
 format = "  %-15s % 7.1f %s"
 
-puts "  Time:      #{forecast.time.localtime}"
+puts "  %-11s % 11s" % ["Date:", forecast.time.localtime.strftime("%Y-%m-%d")]
+puts "  %-11s % 11s" % ["Time:", forecast.time.localtime.strftime("%T")]
+puts "  %-11s % 11s" % ["Zone:", forecast.time.localtime.strftime("%z")]
 puts format % ["Latitude:", lat, "°"]
 puts format % ["Longitude:", lon, "°"]
 puts
