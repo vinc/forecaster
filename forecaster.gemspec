@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
     "lib/forecaster/forecast.rb"
   ]
   s.executables << "forecast"
+  s.add_runtime_dependency("faraday",  "~> 0.9",  ">= 0.9.0")
   s.add_runtime_dependency("trollop",  "~> 2.1",  ">= 2.1.0")
   s.add_runtime_dependency("chronic",  "~> 0.10", ">= 0.10.0")
   s.add_runtime_dependency("timezone", "~> 0.99", ">= 0.99.0")

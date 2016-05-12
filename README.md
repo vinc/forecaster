@@ -1,8 +1,8 @@
 Forecaster
 ==========
 
-Ruby wrapper around `curl` and `wgrib2` to fetch and read data from the Global
-Forecast System (GFS).
+Ruby wrapper around `wgrib2` to fetch and read data from the Global Forecast
+System (GFS).
 
 
 Installation
@@ -17,12 +17,12 @@ Alternatively you can build the gem from its repository:
     $ gem build forecaster.gemspec
     $ gem install forecaster-0.0.2.gem
 
-In both cases you need to make sure that you have `curl` and `wgrib2` present
-on your system.
+In both cases you need to make sure that you have `wgrib2` present in your
+system.
 
 To install the later:
 
-    $ curl -o wgrib2.tgz http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
+    $ wget http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
     $ tar -xzvf wgrib2.tgz
     $ cd grib2
     $ export CC=gcc
@@ -41,7 +41,6 @@ To configure the gem:
 
 ```ruby
 Forecaster.configure do |config|
-  config.curl_path = "/usr/bin/curl"
   config.wgrib2_path = "/usr/local/bin/wgrib2"
   config.cache_dir = "/tmp/forecaster"
   config.records = {

@@ -5,7 +5,6 @@ module Forecaster
     def initialize
       @server = "http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod"
       @cache_dir = "/tmp/forecaster"
-      @curl_path = "curl"
       @wgrib2_path = "wgrib2"
 
       # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs_upgrade/gfs.t06z.pgrb2.0p25.f006.shtml

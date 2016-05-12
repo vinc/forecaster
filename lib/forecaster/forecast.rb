@@ -1,4 +1,5 @@
 require "fileutils"
+require "faraday"
 
 module Forecaster
   class Forecast
@@ -40,17 +41,15 @@ module Forecaster
     def fetch
       return self if fetched?
 
-      curl = Forecaster.configuration.curl_path
+      #puts "Downloading '#{url}.idx' ..."
+      con = Faraday.new
+      begin
+        res = con.get("#{url}.idx")
+      rescue Faraday::Error
+        raise "Download of '#{url}.idx' failed"
+      end
 
-      FileUtils.mkpath(File.join(dirname))
-
-      path = File.join(dirname, filename)
-
-      # puts "Downloading '#{url}.idx' ..."
-      cmd = "#{curl} -fsS -o #{path}.idx #{url}.idx"
-      raise "Download of '#{url}.idx' failed" unless system(cmd)
-
-      lines = IO.readlines("#{path}.idx")
+      lines = res.body.lines
       n = lines.count
       ranges = lines.each_index.reduce([]) do |r, i|
         records = Forecaster.configuration.records
@@ -64,16 +63,30 @@ module Forecaster
             break if last != first - 1
           end
 
-          r << "#{first}-#{last}" # cURL syntax for a range
+          r << "#{first}-#{last}" # Range header syntax
         else
           r
         end
       end
-      system("rm #{path}.idx")
 
-      # puts "Downloading '#{url}' ..."
-      cmd = "#{curl} -fsS -r #{ranges.join(",")} -o #{path} #{url}"
-      raise "Download of '#{url}' failed" unless system(cmd)
+      #filesize = ranges.reduce(0) do |acc, range|
+      #  first, last = range.split("-").map(&:to_i)
+      #  acc + last - first
+      #end
+      #n = (filesize.to_f / (1 << 20)).round(2)
+      #puts "Downloading #{n} Mb from '#{url}' ..."
+      con.headers = { "Range" => "bytes=#{ranges.join(",")}" }
+      begin
+        res = con.get(url)
+      rescue Faraday::Error
+        raise "Download of '#{url}' failed"
+      end
+
+      FileUtils.mkpath(File.join(dirname))
+      path = File.join(dirname, filename)
+      File.open(path, "wb") do |f|
+        f.write(res.body)
+      end
 
       self
     end

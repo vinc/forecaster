@@ -23,13 +23,6 @@ RSpec.describe Forecaster::Forecast do
     FileUtils.remove_entry_secure(Forecaster.configuration.cache_dir)
   end
 
-  it "requires curl" do
-    curl_path = Forecaster.configuration.curl_path
-    out = `#{curl_path} --version`
-
-    expect(out).to start_with("curl")
-  end
-
   it "requires wgrib2" do
     wgrib2_path = Forecaster.configuration.wgrib2_path
     out = `#{wgrib2_path} -version`

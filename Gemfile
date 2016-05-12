@@ -7,6 +7,8 @@ gem "chronic"
 gem "timezone"
 gem "geocoder"
 
+gem "faraday"
+
 group :test do
   gem "rspec"
 end

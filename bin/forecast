@@ -124,7 +124,7 @@ y = t.year
 m = t.month
 d = t.day
 c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
-h = 3 * ((t.hour - c + 6 + acc) / 3)
+h = 3 * ((t.hour - c + 6 + acc) / 3) # TODO: Get the next forecast if closer
 
 if opts[:verbose]
   requested_time = req.localtime
