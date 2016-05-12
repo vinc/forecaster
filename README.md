@@ -86,6 +86,76 @@ val = res.to_f - 273.15 # Float in degree Celsius
 [2]: http://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/
 
 
+Command line
+------------
+
+Forecaster has a command line tool that try to be smart:
+
+    $ forecast for tomorrow afternoon in auckland
+    GFS Weather Forecast
+
+      Date:        2016-05-13
+      Time:          12:00:00
+      Zone:             +1200
+      Latitude:         -36.8 °
+      Longitude:        174.8 °
+
+      Pressure:        1013.8 hPa
+      Temperature:       21.7 °C
+      Wind Speed:         8.0 m/s
+      Wind Direction:   163.5 °
+      Precipitation:      0.0 mm
+      Humidity:          65.1 %
+      Cloud Cover:        0.0 %
+
+But you can use it in a more verbose way:
+
+    $ TZ=America/Los_Angeles forecast --time "2016-05-12 09:00:00" \
+                                      --latitude "37.7749295" \
+                                      --longitude "-122.4194155" \
+                                      --verbose
+    Requested time:  2016-05-12 09:00:00 -0700
+    GFS Run time:    2016-05-11 23:00:00 -0700
+    Forecast time:   2016-05-12 08:00:00 -0700
+
+    Downloading: 'http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod/gfs.20160
+    51200/gfs.t00z.pgrb2.0p25.f015'
+    Reading index file...
+    Length: 4992281 (4.76M)
+
+    100% [===========================================>] 696 KB/s Time: 00:00:07
+
+    GFS Weather Forecast
+
+      Date:        2016-05-12
+      Time:          08:00:00
+      Zone:             -0700
+      Latitude:          37.8 °
+      Longitude:       -122.4 °
+
+      Pressure:        1013.5 hPa
+      Temperature:       13.4 °C
+      Wind Speed:         1.0 m/s
+      Wind Direction:   167.3 °
+      Precipitation:      0.0 mm
+      Humidity:          89.7 %
+      Cloud Cover:        0.0 %
+
+To use automatically the timezone of a location you will need to create
+a free [GeoNames account][3] and export your username in an environment
+variable:
+
+    export GEONAMES_USERNAME=<username>
+
+And while you're doing that, you can also export your favorite location
+to avoid typing it every time:
+
+    export FORECAST_LATITUDE=<latitude>
+    export FORECAST_LONGITUDE=<longitude>
+
+[3]: http://www.geonames.org/login
+
+
 License
 -------
 
