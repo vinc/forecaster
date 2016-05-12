@@ -12,6 +12,8 @@ module Forecaster
   end
 
   def self.fetch(year, month, day, hour_of_run, hour_of_forecast)
-    Forecaster::Forecast.new(year, month, day, hour_of_run, hour_of_forecast).fetch
+    forecast = Forecaster::Forecast.new(year, month, day, hour_of_run, hour_of_forecast)
+    forecast.fetch
+    forecast
   end
 end

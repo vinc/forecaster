@@ -43,7 +43,6 @@ module Forecaster
         ranges = fetch_index
         fetch_grib2(ranges)
       end
-      self # TODO: Don't return self here?
     end
 
     def fetch_index
@@ -95,8 +94,6 @@ module Forecaster
         File.delete(path)
         raise "Download of '#{url}' failed: #{e}"
       end
-
-      self
     end
 
     def read(field, latitude: 0.0, longitude: 0.0)
