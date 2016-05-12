@@ -12,7 +12,7 @@ module Forecaster
     end
 
     def time
-      Time.utc(@year, @month, @day, @hour_of_forecast)
+      Time.utc(@year, @month, @day, @hour_of_run) + @hour_of_forecast * 3600
     end
 
     def dirname
