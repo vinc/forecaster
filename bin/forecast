@@ -62,13 +62,17 @@ lon = opts[:longitude] || ENV["FORECAST_LONGITUDE"]
 if opts[:location].size > 0
   Geocoder.configure(:timeout => 10)
   store.transaction do
-    location = opts[:location]
-    key = "geocoder:#{location}"
-    res = store[key] || store[key] = Geocoder.search(location).first.data
-    lat ||= res["geometry"]["location"]["lat"]
-    lon ||= res["geometry"]["location"]["lng"]
+    loc = opts[:location]
+    key = "geocoder:#{loc}"
+
+    # Lookup the location only if not already in cache
+    store[key] ||= (geo = Geocoder.search(loc).first) ? geo.data : nil
+
+    lat ||= store[key]["geometry"]["location"]["lat"]
+    lon ||= store[key]["geometry"]["location"]["lng"]
   end
 end
+
 if lat.nil? || lon.nil?
   puts "Usage: forecast for <time> in <location>"
   exit
