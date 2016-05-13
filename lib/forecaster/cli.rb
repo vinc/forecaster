@@ -9,9 +9,9 @@ require "forecaster"
 
 # Fetch and read data from the Global Forecast System.
 module Forecaster
-  # Fetch and read a specific forecast from a GFS run.
+  # Command line interface printing the forecast for a time and a location.
   class CLI
-    include Singleton
+    include Singleton # TODO: Find how best to organize CLI class
 
     FORECAST_FORMAT = "  %-15s % 7.1f %s".freeze
 
@@ -195,7 +195,7 @@ module Forecaster
       m = t.month
       d = t.day
       c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
-      h = 3 * ((t.hour - c + 6 + a) / 3) # hour of the forecast (3, 6, 9, ... 384)
+      h = 3 * ((t.hour - c + 6 + a) / 3) # forecast hour (3, 6, 9, ... 384)
 
       if h > 384
         puts "Error: date too far in the future"
