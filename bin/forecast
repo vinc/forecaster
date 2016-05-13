@@ -32,11 +32,13 @@ store = YAML::Store.new(cache_file)
 #
 
 opts = Trollop.options do
-  opt :verbose,   "verbose mode"
-  opt :latitude,  "latitude in decimal degree",  :type => Float
-  opt :longitude, "longitude in decimal degree", :type => Float
-  opt :time,      "when",                        :type => String
-  opt :location,  "where",                       :type => String
+  banner          "Usage: forecast for <time> in <location>\n\nOptions:"
+  version         "Forecaster v#{Forecaster::VERSION}"
+  opt :time,      "Set time in any format",  :type => String
+  opt :location,  "Set location name",       :type => String
+  opt :latitude,  "Set latitude in degree",  :type => Float, :short => "a"
+  opt :longitude, "Set longitude in degree", :type => Float, :short => "o"
+  opt :debug,     "Enable debug mode"
 end
 
 cmd_opts = { :time => [], :location => [] }
@@ -71,12 +73,12 @@ lon = ENV["FORECAST_LONGITUDE"]
 # 2. From `location` option
 if opts[:location]
   store.transaction do
-    puts "Geolocalizing:   '#{opts[:location]}'" if opts[:verbose]
+    puts "Geolocalizing:   '#{opts[:location]}'" if opts[:debug]
 
     key = "geocoder:#{opts[:location]}"
     lat, lon = store[key] ||= geolocalize(opts[:location])
 
-    if opts[:verbose]
+    if opts[:debug]
       if lat && lon
         puts "Found:           #{lat}, #{lon}\n\n"
       else
@@ -167,7 +169,7 @@ if h > 384
   exit
 end
 
-if opts[:verbose]
+if opts[:debug]
   requested_time = req.localtime
   gfs_run_time   = (t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
   forecast_time  = (t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
@@ -185,7 +187,7 @@ end
 forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
 unless forecast.fetched?
-  if opts[:verbose]
+  if opts[:debug]
     puts "Downloading: '#{forecast.url}'"
 
     puts "Reading index file..."

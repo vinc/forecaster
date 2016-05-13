@@ -113,7 +113,7 @@ But you can use it in a more verbose way:
     $ TZ=America/Los_Angeles forecast --time "2016-05-12 09:00:00" \
                                       --latitude "37.7749295" \
                                       --longitude "-122.4194155" \
-                                      --verbose
+                                      --debug
     Requested time:  2016-05-12 09:00:00 -0700
     GFS Run time:    2016-05-11 23:00:00 -0700
     Forecast time:   2016-05-12 08:00:00 -0700

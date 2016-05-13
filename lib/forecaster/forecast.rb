@@ -1,7 +1,9 @@
 require "fileutils"
 require "excon"
 
+# Fetch and read data from the Global Forecast System.
 module Forecaster
+  # Fetch and read a specific forecast from a GFS run.
   class Forecast
     def initialize(year, month, day, hour_of_run, hour_of_forecast)
       @year = year

@@ -1,6 +1,8 @@
 require "forecaster/configuration"
 require "forecaster/forecast"
+require "forecaster/version"
 
+# Fetch and read data from the Global Forecast System.
 module Forecaster
   class << self
     attr_accessor :configuration

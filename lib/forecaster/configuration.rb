@@ -1,4 +1,6 @@
+# Fetch and read data from the Global Forecast System.
 module Forecaster
+  # Configure how to fetch and read from a forecast file.
   class Configuration
     attr_accessor :server, :cache_dir, :curl_path, :wgrib2_path, :records
 
