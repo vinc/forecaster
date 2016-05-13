@@ -14,23 +14,6 @@ module Forecaster
     FORECAST_FORMAT = "  %-15s % 7.1f %s".freeze
 
     def self.process(args)
-      Forecaster.configure do |config|
-        config.cache_dir = "/tmp/forecaster"
-        config.records = {
-          :prate => ":PRATE:surface:",
-          :pres  => ":PRES:surface:",
-          :rh    => ":RH:2 m above ground:",
-          :tmp   => ":TMP:2 m above ground:",
-          :ugrd  => ":UGRD:10 m above ground:",
-          :vgrd  => ":VGRD:10 m above ground:",
-          :tcdc  => ":TCDC:entire atmosphere:"
-        }
-      end
-
-      FileUtils.mkpath(Forecaster.configuration.cache_dir)
-      cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
-      store = YAML::Store.new(cache_file)
-
       #
       # Parse command line options
       #
@@ -42,6 +25,7 @@ module Forecaster
         opt :location,  "Set location name",       :type => String
         opt :latitude,  "Set latitude in degree",  :type => Float, :short => "a"
         opt :longitude, "Set longitude in degree", :type => Float, :short => "o"
+        opt :cache,     "Set cache directory",     :default => "/tmp/forecaster"
         opt :debug,     "Enable debug mode"
       end
 
@@ -61,45 +45,63 @@ module Forecaster
       opts[:location] ||= cmd_opts[:location].join(" ")
 
       #
+      # Configure gem
+      #
+
+      Forecaster.configure do |config|
+        config.cache_dir = opts[:cache]
+        config.records = {
+          :prate => ":PRATE:surface:",
+          :pres  => ":PRES:surface:",
+          :rh    => ":RH:2 m above ground:",
+          :tmp   => ":TMP:2 m above ground:",
+          :ugrd  => ":UGRD:10 m above ground:",
+          :vgrd  => ":VGRD:10 m above ground:",
+          :tcdc  => ":TCDC:entire atmosphere:"
+        }
+      end
+
+      FileUtils.mkpath(Forecaster.configuration.cache_dir)
+      cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
+      store = YAML::Store.new(cache_file)
+
+      puts "GFS Weather Forecast"
+      puts
+
+      #
       # Get location
       #
 
-      def geolocalize(location)
-        Geocoder.configure(:timeout => 10)
-        res = Geocoder.search(location).first
-        [res.latitude, res.longitude] if res
-      end
-
-      # 1. From environment variables
       lat = ENV["FORECAST_LATITUDE"]
       lon = ENV["FORECAST_LONGITUDE"]
 
-      # 2. From `location` option
       if opts[:location]
         store.transaction do
-          puts "Geolocalizing:   '#{opts[:location]}'" if opts[:debug]
+          if opts[:debug]
+            puts format("%-15s '%s'", "Geolocalizing:", opts[:location])
+          end
 
           key = "geocoder:#{opts[:location]}"
           lat, lon = store[key] ||= geolocalize(opts[:location])
 
           if opts[:debug]
             if lat && lon
-              puts "Found:           #{lat}, #{lon}\n\n"
+              puts format("%-15s %s, %s", "Found:", lat, lon)
             else
-              puts "Not found\n\n"
+              puts "Not found"
             end
+            puts
           end
         end
       end
 
-      # 3. From `latitude` and `longitude` options
       if opts[:latitude] && opts[:longitude]
         lat = opts[:latitude]
         lon = opts[:longitude]
       end
 
       if lat.nil? || lon.nil?
-        puts "Usage: forecast for <time> in <location>"
+        puts "Usage: forecast for <time> in <location>" # TODO: DRY
         exit
       end
 
@@ -117,6 +119,7 @@ module Forecaster
           ENV["TZ"] = store[key] || store[key] = Timezone.lookup(lat, lon).name
         end
       end
+      # NOTE: `old_tz` will be restored at the end of this method
 
       #
       # Get time
@@ -174,13 +177,12 @@ module Forecaster
       end
 
       if opts[:debug]
-        requested_time = req.localtime
-        gfs_run_time   = (t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime
-        forecast_time  = (t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime
-
-        puts "Requested time:  #{requested_time}"
-        puts "GFS Run time:    #{gfs_run_time}"
-        puts "Forecast time:   #{forecast_time}"
+        puts format("%-15s %s", "Requested time:",
+          req.localtime)
+        puts format("%-15s %s", "GFS run time:",
+          (t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime)
+        puts format("%-15s %s", "Forecast time:",
+          (t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime)
         puts
       end
 
@@ -228,10 +230,6 @@ module Forecaster
       # Print forecast
       #
 
-      puts "GFS Weather Forecast"
-      puts
-
-
       forecast_time = forecast.time.localtime
 
       puts format("  %-11s % 11s", "Date:", forecast_time.strftime("%Y-%m-%d"))
@@ -268,6 +266,14 @@ module Forecaster
       ENV["TZ"] = old_tz
 
       0
+    end
+
+    private
+
+    def self.geolocalize(location)
+      Geocoder.configure(:timeout => 10)
+      res = Geocoder.search(location).first
+      [res.latitude, res.longitude] if res
     end
   end
 end
