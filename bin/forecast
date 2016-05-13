@@ -2,4 +2,4 @@
 
 require "forecaster"
 
-Forecaster::CLI.process(ARGV)
+Forecaster::CLI.start(ARGV, ENV)

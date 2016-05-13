@@ -15,15 +15,15 @@ module Forecaster
 
     FORECAST_FORMAT = "  %-15s % 7.1f %s".freeze
 
-    def self.process(args)
-      instance.process(args)
+    def self.start(args, env)
+      instance.start(args, env)
     end
 
     def initialize
       @store = nil
     end
 
-    def process(args)
+    def start(args, env)
       opts = parse(args)
 
       configure(opts)
@@ -34,22 +34,21 @@ module Forecaster
       puts "GFS Weather Forecast"
       puts
 
-      lat, lon = get_location(opts)
+      lat, lon = get_location(opts, env)
 
       if lat.nil? || lon.nil?
         puts "Usage: forecast for <time> in <location>" # TODO: DRY
         exit
       end
 
-      old_tz = ENV["TZ"]
-      ENV["TZ"] = get_timezone(lat, lon) || old_tz
+      ENV["TZ"] = get_timezone(lat, lon, env) || env["TZ"]
 
       y, m, d, c, h = get_time(opts)
       forecast = get_forecast(y, m, d, c, h, opts)
 
       print_forecast(forecast, lat, lon)
 
-      ENV["TZ"] = old_tz
+      ENV["TZ"] = env["TZ"] # Restore TZ
     end
 
     # Parse command line options
@@ -101,9 +100,9 @@ module Forecaster
     end
 
     # Get location
-    def get_location(opts)
-      lat = ENV["FORECAST_LATITUDE"]
-      lon = ENV["FORECAST_LONGITUDE"]
+    def get_location(opts, env)
+      lat = env["FORECAST_LATITUDE"]
+      lon = env["FORECAST_LONGITUDE"]
 
       if opts[:location]
         @store.transaction do
@@ -134,11 +133,11 @@ module Forecaster
     end
 
     # Get timezone
-    def get_timezone(lat, lon)
+    def get_timezone(lat, lon, env)
       tz = nil
-      if ENV["GEONAMES_USERNAME"]
+      if env["GEONAMES_USERNAME"]
         Timezone::Lookup.config(:geonames) do |config|
-          config.username = ENV["GEONAMES_USERNAME"]
+          config.username = env["GEONAMES_USERNAME"]
         end
         @store.transaction do
           key = "timezone:#{lat}:#{lon}"
