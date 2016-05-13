@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
     "lib/forecaster/cli.rb",
     "lib/forecaster/configuration.rb",
     "lib/forecaster/forecast.rb",
-    "lib/forecaster/version.rb",
+    "lib/forecaster/version.rb"
   ]
   s.executables << "forecast"
   s.add_runtime_dependency("excon",            "~> 0.49", ">= 0.49.0")

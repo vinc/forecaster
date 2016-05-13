@@ -11,13 +11,49 @@ require "forecaster"
 module Forecaster
   # Fetch and read a specific forecast from a GFS run.
   class CLI
+    include Singleton
+
     FORECAST_FORMAT = "  %-15s % 7.1f %s".freeze
 
     def self.process(args)
-      #
-      # Parse command line options
-      #
+      instance.process(args)
+    end
 
+    def initialize
+      @store = nil
+    end
+
+    def process(args)
+      opts = parse(args)
+
+      configure(opts)
+
+      cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
+      @store = YAML::Store.new(cache_file)
+
+      puts "GFS Weather Forecast"
+      puts
+
+      lat, lon = get_location(opts)
+
+      if lat.nil? || lon.nil?
+        puts "Usage: forecast for <time> in <location>" # TODO: DRY
+        exit
+      end
+
+      old_tz = ENV["TZ"]
+      ENV["TZ"] = get_timezone(lat, lon) || old_tz
+
+      y, m, d, c, h = get_time(opts)
+      forecast = get_forecast(y, m, d, c, h, opts)
+
+      print_forecast(forecast, lat, lon)
+
+      ENV["TZ"] = old_tz
+    end
+
+    # Parse command line options
+    def parse(args)
       opts = Trollop.options(args) do
         usage           "for <time> in <location>"
         version         "Forecaster v#{Forecaster::VERSION}"
@@ -44,10 +80,11 @@ module Forecaster
       opts[:time] ||= cmd_opts[:time].join(" ")
       opts[:location] ||= cmd_opts[:location].join(" ")
 
-      #
-      # Configure gem
-      #
+      opts
+    end
 
+    # Configure gem
+    def configure(opts)
       Forecaster.configure do |config|
         config.cache_dir = opts[:cache]
         config.records = {
@@ -60,29 +97,22 @@ module Forecaster
           :tcdc  => ":TCDC:entire atmosphere:"
         }
       end
-
       FileUtils.mkpath(Forecaster.configuration.cache_dir)
-      cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
-      store = YAML::Store.new(cache_file)
+    end
 
-      puts "GFS Weather Forecast"
-      puts
-
-      #
-      # Get location
-      #
-
+    # Get location
+    def get_location(opts)
       lat = ENV["FORECAST_LATITUDE"]
       lon = ENV["FORECAST_LONGITUDE"]
 
       if opts[:location]
-        store.transaction do
+        @store.transaction do
           if opts[:debug]
             puts format("%-15s '%s'", "Geolocalizing:", opts[:location])
           end
 
           key = "geocoder:#{opts[:location]}"
-          lat, lon = store[key] ||= geolocalize(opts[:location])
+          lat, lon = @store[key] ||= geolocalize(opts[:location])
 
           if opts[:debug]
             if lat && lon
@@ -100,46 +130,43 @@ module Forecaster
         lon = opts[:longitude]
       end
 
-      if lat.nil? || lon.nil?
-        puts "Usage: forecast for <time> in <location>" # TODO: DRY
-        exit
-      end
+      [lat, lon]
+    end
 
-      #
-      # Get timezone
-      #
-
-      old_tz = ENV["TZ"]
+    # Get timezone
+    def get_timezone(lat, lon)
+      tz = nil
       if ENV["GEONAMES_USERNAME"]
         Timezone::Lookup.config(:geonames) do |config|
           config.username = ENV["GEONAMES_USERNAME"]
         end
-        store.transaction do
+        @store.transaction do
           key = "timezone:#{lat}:#{lon}"
-          ENV["TZ"] = store[key] || store[key] = Timezone.lookup(lat, lon).name
+          tz = @store[key] || @store[key] = Timezone.lookup(lat, lon).name
         end
       end
-      # NOTE: `old_tz` will be restored at the end of this method
 
-      #
-      # Get time
-      #
+      tz
+    end
 
+    # Get time
+    def get_time(opts)
       # There is a new GFS run every 6 hours starting at midnight UTC, and it
       # takes approximately 3 to 5 hours before a run is available online.
       #
-      # So we take current time in UTC and deduce the time of the last GFS run
-      # by calculating `6 * (h / 6)` where `h` is the current hour. Then we use
-      # the previous run to be safe because this one may not be available.
+      # So we take current time in UTC and deduce the time of the last GFS
+      # run by calculating `6 * (h / 6)` where `h` is the current hour. Then
+      # we use the previous run to be safe because this one may not be
+      # available.
       #
       # There is a forecast for every 3 hours after a run. So we use the
       # number of hours between the run and now to find the closest forecast
-      # in the past, and the closest 3 hours from that in the future, and
-      # we interpolate the value for the current time.
+      # in the past, and the closest 3 hours from that in the future, and we
+      # interpolate the value for the current time.
       #
-      # TODO: At the moment we only use the last forecast before the requested
-      # time, we need to use the next if its closest, or interpolate between the
-      # two as explained above.
+      # TODO: At the moment we only use the last forecast before the
+      # requested time, we need to use the next if its closest, or
+      # interpolate between the two as explained above.
 
       now = Time.now.utc
 
@@ -186,10 +213,11 @@ module Forecaster
         puts
       end
 
-      #
-      # Get forecast
-      #
+      [y, m, d, c, h]
+    end
 
+    # Get forecast
+    def get_forecast(y, m, d, c, h, opts)
       forecast = Forecaster::Forecast.new(y, m, d, c, h)
 
       unless forecast.fetched?
@@ -226,10 +254,11 @@ module Forecaster
         end
       end
 
-      #
-      # Print forecast
-      #
+      forecast
+    end
 
+    # Print forecast
+    def print_forecast(forecast, lat, lon)
       forecast_time = forecast.time.localtime
 
       puts format("  %-11s % 11s", "Date:", forecast_time.strftime("%Y-%m-%d"))
@@ -262,15 +291,9 @@ module Forecaster
       puts format(FORECAST_FORMAT, "Precipitation:",  precipitation,  "mm")
       puts format(FORECAST_FORMAT, "Humidity:",       humidity,       "%")
       puts format(FORECAST_FORMAT, "Cloud Cover:",    cloud_cover,    "%")
-
-      ENV["TZ"] = old_tz
-
-      0
     end
 
-    private
-
-    def self.geolocalize(location)
+    def geolocalize(location)
       Geocoder.configure(:timeout => 10)
       res = Geocoder.search(location).first
       [res.latitude, res.longitude] if res
