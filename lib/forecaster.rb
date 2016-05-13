@@ -1,6 +1,7 @@
 require "forecaster/configuration"
 require "forecaster/forecast"
 require "forecaster/version"
+require "forecaster/cli"
 
 # Fetch and read data from the Global Forecast System.
 module Forecaster
