@@ -42,12 +42,9 @@ module Forecaster
       end
 
       ENV["TZ"] = get_timezone(lat, lon, env) || env["TZ"]
-
-      y, m, d, c, h = get_time(opts)
-      forecast = get_forecast(y, m, d, c, h, opts)
-
+      time = get_time(opts)
+      forecast = get_forecast(time, opts)
       print_forecast(forecast, lat, lon)
-
       ENV["TZ"] = env["TZ"] # Restore TZ
     end
 
@@ -101,9 +98,6 @@ module Forecaster
 
     # Get location
     def get_location(opts, env)
-      lat = env["FORECAST_LATITUDE"]
-      lon = env["FORECAST_LONGITUDE"]
-
       if opts[:location]
         @store.transaction do
           if opts[:debug]
@@ -122,14 +116,12 @@ module Forecaster
             puts
           end
         end
+        [lat, lon]
+      elsif opts[:latitude] && opts[:longitude]
+        [opts[:latitude], opts[:longitude]]
+      else
+        [env["FORECAST_LATITUDE"], env["FORECAST_LONGITUDE"]]
       end
-
-      if opts[:latitude] && opts[:longitude]
-        lat = opts[:latitude]
-        lon = opts[:longitude]
-      end
-
-      [lat, lon]
     end
 
     # Get timezone
@@ -150,74 +142,29 @@ module Forecaster
 
     # Get time
     def get_time(opts)
-      # There is a new GFS run every 6 hours starting at midnight UTC, and it
-      # takes approximately 3 to 5 hours before a run is available online.
-      #
-      # So we take current time in UTC and deduce the time of the last GFS
-      # run by calculating `6 * (h / 6)` where `h` is the current hour. Then
-      # we use the previous run to be safe because this one may not be
-      # available.
-      #
-      # There is a forecast for every 3 hours after a run. So we use the
-      # number of hours between the run and now to find the closest forecast
-      # in the past, and the closest 3 hours from that in the future, and we
-      # interpolate the value for the current time.
-      #
-      # TODO: At the moment we only use the last forecast before the
-      # requested time, we need to use the next if its closest, or
-      # interpolate between the two as explained above.
-
-      now = Time.now.utc
-
-      # TODO: Find better names
-      req = now
-      a = 0
-      t = now - 6 * 3600
-
       if opts[:time]
-        # TODO: Check if arg is a timestamp first
-        arg = Chronic.parse(opts[:time])
-        if arg.nil?
+        # TODO: Look for a timestamp first
+        time = Chronic.parse(opts[:time])
+        if res.nil?
           puts "Error: could not parse time"
           exit
         end
-        req = arg.utc
-
-        if req > now
-          a = (req - now).to_i / 3600
-        else
-          a = -3
-          t = req - 3 * 3600
-        end
+        time.utc
+      else
+        Time.now.utc
       end
-
-      y = t.year
-      m = t.month
-      d = t.day
-      c = 6 * (t.hour / 6) # hour of GFS run (0, 6, 12 or 18)
-      h = 3 * ((t.hour - c + 6 + a) / 3) # forecast hour (3, 6, 9, ... 384)
-
-      if h > 384
-        puts "Error: date too far in the future"
-        exit
-      end
-
-      if opts[:debug]
-        puts format("%-15s %s", "Requested time:",
-          req.localtime)
-        puts format("%-15s %s", "GFS run time:",
-          (t - (t.hour - c) * 3600 - t.min * 60 - t.sec).localtime)
-        puts format("%-15s %s", "Forecast time:",
-          (t - (t.hour - c - h) * 3600 - t.min * 60 - t.sec).localtime)
-        puts
-      end
-
-      [y, m, d, c, h]
     end
 
     # Get forecast
-    def get_forecast(y, m, d, c, h, opts)
-      forecast = Forecaster::Forecast.new(y, m, d, c, h)
+    def get_forecast(time, opts)
+      forecast = Forecast.at(time)
+
+      if opts[:debug]
+        puts format("%-15s %s", "Requested time:", time.localtime)
+        puts format("%-15s %s", "GFS run time:", forecast.run_time.localtime)
+        puts format("%-15s %s", "Forecast time:", forecast.time.localtime)
+        puts
+      end
 
       unless forecast.fetched?
         if opts[:debug]

@@ -1,5 +1,6 @@
 require "tmpdir"
 require "fileutils"
+require "timecop"
 
 RSpec.describe Forecaster do
   before do
@@ -36,6 +37,48 @@ RSpec.describe Forecaster do
   end
 
   describe Forecaster::Forecast do
+    it "gets the time of the last GFS run" do
+      # There are 4 GFS runs per day at 0h, 6h, 12h and 18h UTC.
+      # They are available online 6 hours after the run.
+      # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
+
+      t = Time.new(2015, 1, 1, 0, 0).utc
+      Timecop.freeze(t + 7 * 3600) do
+        expect(Forecaster::Forecast.last_run_at).to eq(t)
+      end
+      Timecop.freeze(t + 13 * 3600) do
+        expect(Forecaster::Forecast.last_run_at).to eq(t + 6 * 3600)
+      end
+    end
+
+    it "create a forecast" do
+      t = Time.new(2015, 1, 1, 0, 0).utc
+      Timecop.freeze(t + 7 * 3600) do
+        # There is a forecast every 3 hours after a run for 384 hours.
+        # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
+
+        # Forecast from an archived run
+        forecast = Forecaster::Forecast.at(t + 1 * 3600)
+        expect(forecast.run_time).to eq(t - 6 * 3600)
+        expect(forecast.time).to eq(t)
+
+        # Forecasts from the last run
+        forecast = Forecaster::Forecast.at(t + 4 * 3600)
+        expect(forecast.run_time).to eq(t)
+        expect(forecast.time).to eq(t + 3 * 3600)
+
+        forecast = Forecaster::Forecast.at(t + 10 * 3600)
+        expect(forecast.run_time).to eq(t)
+        expect(forecast.time).to eq(t + 9 * 3600)
+
+        forecast = Forecaster::Forecast.at(t + 49 * 3600)
+        expect(forecast.run_time).to eq(t)
+        expect(forecast.time).to eq(t + 48 * 3600)
+
+        # TODO: Test with a time too far in the future
+      end
+    end
+
     it "fetches a forecast" do
       forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
 

@@ -7,30 +7,61 @@ module Forecaster
   #
   # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
   class Forecast
-    def initialize(year, month, day, hour_of_run, hour_of_forecast)
+    def self.last_run_at
+      # There is a new GFS run every 6 hours starting at midnight UTC, and it
+      # takes approximately 3 to 5 hours before a run is available online, so
+      # to be on the safe side we return the previous one.
+      now = Time.now.utc
+      run = Time.new(now.year, now.month, now.day, (now.hour / 6) * 6)
+
+      run - 6 * 3600
+    end
+
+    def self.at(time)
+      # There is a forecast every 3 hours after a run for 384 hours.
+      t = time.utc
+      fct = Time.new(t.year, t.month, t.day, (t.hour / 3) * 3)
+      run = Time.new(t.year, t.month, t.day, (t.hour / 6) * 6)
+      run -= 6 * 3600 if run == fct
+
+      last_run = Forecast.last_run_at
+      run = last_run if run > last_run
+
+      fct_hour = (fct - run) / 3600
+
+      raise "Time too far in the future" if fct_hour > 384
+
+      Forecast.new(run.year, run.month, run.day, run.hour, fct_hour)
+    end
+
+    def initialize(year, month, day, run_hour, fct_hour)
       @year = year
       @month = month
       @day = day
-      @hour_of_run = hour_of_run
-      @hour_of_forecast = hour_of_forecast
+      @run_hour = run_hour
+      @fct_hour = fct_hour
+    end
+
+    def run_time
+      Time.utc(@year, @month, @day, @run_hour)
     end
 
     def time
-      Time.utc(@year, @month, @day, @hour_of_run) + @hour_of_forecast * 3600
+      run_time + @fct_hour * 3600
     end
 
     def dirname
-      subdir = format("%04d%02d%02d%02d", @year, @month, @day, @hour_of_run)
+      subdir = format("%04d%02d%02d%02d", @year, @month, @day, @run_hour)
       File.join(Forecaster.configuration.cache_dir, subdir)
     end
 
     def filename
-      format("gfs.t%02dz.pgrb2.0p25.f%03d", @hour_of_run, @hour_of_forecast)
+      format("gfs.t%02dz.pgrb2.0p25.f%03d", @run_hour, @fct_hour)
     end
 
     def url
       server = Forecaster.configuration.server
-      subdir = format("gfs.%04d%02d%02d%02d", @year, @month, @day, @hour_of_run)
+      subdir = format("gfs.%04d%02d%02d%02d", @year, @month, @day, @run_hour)
       format("%s/%s/%s", server, subdir, filename)
     end
 

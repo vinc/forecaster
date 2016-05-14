@@ -1,14 +1,13 @@
 source "https://rubygems.org"
 
-# For `forecast` executable
-gem "trollop"
 gem "chronic"
-gem "timezone"
-gem "geocoder"
-
 gem "excon"
+gem "geocoder"
 gem "ruby-progressbar"
+gem "timezone"
+gem "trollop"
 
 group :test do
   gem "rspec"
+  gem "timecop"
 end
