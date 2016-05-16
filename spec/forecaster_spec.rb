@@ -57,20 +57,40 @@ RSpec.describe Forecaster do
         # There is a forecast every 3 hours after a run for 384 hours.
         # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
 
-        # Forecast from an archived run
+        #
+        # Forecasts from an archived run
+        #
+
+        # exactly at the time of a forecast
+        forecast = Forecaster::Forecast.at(t)
+        expect(forecast.run_time).to eq(t - 6 * 3600)
+        expect(forecast.time).to eq(t)
+
+        # 1 hour after a forecast time
         forecast = Forecaster::Forecast.at(t + 1 * 3600)
         expect(forecast.run_time).to eq(t - 6 * 3600)
         expect(forecast.time).to eq(t)
 
+        #
         # Forecasts from the last run
+        #
+
+        # exactly at the time of a forecast
+        forecast = Forecaster::Forecast.at(t + 6 * 3600)
+        expect(forecast.run_time).to eq(t)
+        expect(forecast.time).to eq(t + 6 * 3600)
+
+        # 1 hour after a forecast time
         forecast = Forecaster::Forecast.at(t + 4 * 3600)
         expect(forecast.run_time).to eq(t)
         expect(forecast.time).to eq(t + 3 * 3600)
 
+        # 1 hour after a forecast time
         forecast = Forecaster::Forecast.at(t + 10 * 3600)
         expect(forecast.run_time).to eq(t)
         expect(forecast.time).to eq(t + 9 * 3600)
 
+        # 1 hour after a forecast time
         forecast = Forecaster::Forecast.at(t + 49 * 3600)
         expect(forecast.run_time).to eq(t)
         expect(forecast.time).to eq(t + 48 * 3600)
