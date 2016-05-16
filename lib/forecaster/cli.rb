@@ -36,10 +36,7 @@ module Forecaster
 
       lat, lon = get_location(opts, env)
 
-      if lat.nil? || lon.nil?
-        puts "Usage: forecast for <time> in <location>" # TODO: DRY
-        exit
-      end
+      Trollop.die("Could not parse location") if lat.nil? || lon.nil?
 
       ENV["TZ"] = get_timezone(lat, lon, env) || env["TZ"]
       time = get_time(opts)
@@ -115,8 +112,9 @@ module Forecaster
             end
             puts
           end
+
+          [lat, lon]
         end
-        [lat, lon]
       elsif opts[:latitude] && opts[:longitude]
         [opts[:latitude], opts[:longitude]]
       else
@@ -145,10 +143,7 @@ module Forecaster
       if opts[:time]
         # TODO: Look for a timestamp first
         time = Chronic.parse(opts[:time])
-        if res.nil?
-          puts "Error: could not parse time"
-          exit
-        end
+        Trollop.die(:time, "could not be parsed") if time.nil?
         time.utc
       else
         Time.now.utc
