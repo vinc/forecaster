@@ -74,34 +74,49 @@ module Forecaster
     # the configuration will be downloaded.
     def fetch
       return if fetched?
-      ranges = fetch_index
-      fetch_grib2(ranges)
+
+      ranges = fetch_ranges
+
+      # Select which byte ranges to download
+      records = Forecaster.configuration.records.values
+      filtered_ranges = records.map { |k| ranges[k] }
+
+      fetch_grib2(filtered_ranges)
     end
 
-    def fetch_index
+    # Fetch the index file of a GRIB2 file containing the data of a forecast.
+    #
+    # Returns a hashmap of every records in the file with their byte ranges.
+    #
+    # With this method we can avoid downloading unnecessary parts of the GRIB2
+    # file by matching the records defined in the configuration. It can also
+    # be used to set up the later.
+    def fetch_ranges
       begin
         res = Excon.get("#{url}.idx")
       rescue Excon::Errors::Error
         raise "Download of '#{url}.idx' failed"
       end
+      lines = res.body.lines.map { |line| line.split(":") }
+      lines.each_index.reduce({}) do |ranges, i|
+        # A typical line (before the split on `:`) looks like this:
+        # `12:4593854:d=2016051118:TMP:2 mb:9 hour fcst:`
+        line = lines[i]
+        next_line = lines[i + 1] # NOTE: Will be `nil` on the last line
 
-      lines = res.body.lines
-      lines.each_index.reduce([]) do |r, i|
-        records = Forecaster.configuration.records
-        if records.values.any? { |record| lines[i].include?(record) }
-          first = lines[i].split(":")[1].to_i
-          last = ""
+        # The fourth and fifth fields constitue the key to identify the records
+        # defined in `Forecaster::Configuration`.
+        key = ":#{line[3]}:#{line[4]}:"
 
-          j = i
-          while (j += 1) < lines.count
-            last = lines[j].split(":")[1].to_i - 1
-            break if last != first - 1
-          end
+        # The second field is the first byte of the record in the GRIB2 file.
+        ranges[key] = [line[1].to_i]
 
-          r << "#{first}-#{last}" # Range header syntax
-        else
-          r
-        end
+        # To get the last byte we need to read the next line.
+        # If we are on the last line we won't be able to get the last byte,
+        # but we don't need it according to the section 14.35.1 Byte Ranges
+        # of RFC 2616.
+        ranges[key] << next_line[1].to_i - 1 if next_line
+        ranges
       end
     end
 
@@ -114,7 +129,9 @@ module Forecaster
         progress_block.call(total - remaining, total) if progress_block
       end
 
-      headers = { "Range" => "bytes=#{ranges.join(',')}" }
+      byte_ranges = ranges.map { |r| r.join("-") }.join(',')
+      headers = { "Range" => "bytes=#{byte_ranges}" }
+
       begin
         Excon.get(url, :headers => headers, :response_block => streamer)
       rescue Excon::Errors::Error => e

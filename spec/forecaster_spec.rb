@@ -115,5 +115,14 @@ RSpec.describe Forecaster do
       expect(value).to be_a(String)
       expect(value.to_i).to be_between(180, 340).inclusive # in Kelvin
     end
+
+    it "fetches byte ranges from an index file" do
+      forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
+      ranges = forecast.fetch_ranges
+
+      expect(ranges[":UGRD:planetary boundary layer:"][0]).to eq(0)
+      expect(ranges[":TMP:2 m above ground:"].size).to eq(2)
+      expect(ranges[":5WAVH:500 mb:"].size).to eq(1)
+    end
   end
 end
