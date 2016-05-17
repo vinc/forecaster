@@ -98,7 +98,7 @@ module Forecaster
         raise "Download of '#{url}.idx' failed"
       end
       lines = res.body.lines.map { |line| line.split(":") }
-      lines.each_index.reduce({}) do |ranges, i|
+      lines.each_index.each_with_object({}) do |i, ranges|
         # A typical line (before the split on `:`) looks like this:
         # `12:4593854:d=2016051118:TMP:2 mb:9 hour fcst:`
         line = lines[i]
@@ -116,7 +116,6 @@ module Forecaster
         # but we don't need it according to the section 14.35.1 Byte Ranges
         # of RFC 2616.
         ranges[key] << next_line[1].to_i - 1 if next_line
-        ranges
       end
     end
 
@@ -129,7 +128,7 @@ module Forecaster
         progress_block.call(total - remaining, total) if progress_block
       end
 
-      byte_ranges = ranges.map { |r| r.join("-") }.join(',')
+      byte_ranges = ranges.map { |r| r.join("-") }.join(",")
       headers = { "Range" => "bytes=#{byte_ranges}" }
 
       begin
