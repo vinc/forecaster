@@ -42,7 +42,7 @@ RSpec.describe Forecaster do
       # They are available online 6 hours after the run.
       # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
 
-      t = Time.new(2015, 1, 1, 0, 0).utc
+      t = Time.utc(2015, 1, 1, 0, 0)
       Timecop.freeze(t + 7 * 3600) do
         expect(Forecaster::Forecast.last_run_at).to eq(t)
       end
@@ -52,7 +52,7 @@ RSpec.describe Forecaster do
     end
 
     it "create a forecast" do
-      t = Time.new(2015, 1, 1, 0, 0).utc
+      t = Time.utc(2015, 1, 1, 0, 0)
       Timecop.freeze(t + 7 * 3600) do
         # There is a forecast every 3 hours after a run for 384 hours.
         # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
