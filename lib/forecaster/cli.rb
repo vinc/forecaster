@@ -4,6 +4,7 @@ require "chronic"
 require "timezone"
 require "geocoder"
 require "ruby-progressbar"
+require "rainbow"
 
 require "forecaster"
 
@@ -12,8 +13,6 @@ module Forecaster
   # Command line interface printing the forecast for a time and a location.
   class CLI
     include Singleton # TODO: Find how best to organize CLI class
-
-    FORECAST_FORMAT = "  %-15s % 7.1f %s".freeze
 
     def self.start(args, env)
       instance.start(args, env)
@@ -31,7 +30,7 @@ module Forecaster
       cache_file = File.join(Forecaster.configuration.cache_dir, "forecast.yml")
       @store = YAML::Store.new(cache_file)
 
-      puts "GFS Weather Forecast"
+      puts Rainbow("GFS Weather Forecast").bright
       puts
 
       lat, lon = get_location(opts, env)
@@ -98,7 +97,7 @@ module Forecaster
       if opts[:location]
         @store.transaction do
           if opts[:debug]
-            puts format("%-15s '%s'", "Geolocalizing:", opts[:location])
+            putf_debug("Geolocalizing", opts[:location], "'%s'")
           end
 
           key = "geocoder:#{opts[:location]}"
@@ -106,9 +105,9 @@ module Forecaster
 
           if opts[:debug]
             if lat && lon
-              puts format("%-15s %s, %s", "Found:", lat, lon)
+              putf_debug("Location", lat, "%05.2f, %05.2f", optional: lon)
             else
-              puts "Not found"
+              puts Rainbow("Location not found").red
             end
             puts
           end
@@ -155,17 +154,17 @@ module Forecaster
       forecast = Forecast.at(time)
 
       if opts[:debug]
-        puts format("%-15s %s", "Requested time:", time.localtime)
-        puts format("%-15s %s", "GFS run time:", forecast.run_time.localtime)
-        puts format("%-15s %s", "Forecast time:", forecast.time.localtime)
+        putf_debug("Requested time", time.localtime,              "%s")
+        putf_debug("GFS run time",   forecast.run_time.localtime, "%s")
+        putf_debug("Forecast time",  forecast.time.localtime,     "%s")
         puts
       end
 
       unless forecast.fetched?
         if opts[:debug]
-          puts "Downloading: '#{forecast.url}'"
+          putf_debug("Downloading", forecast.url, "'%s'")
 
-          puts "Reading index file..."
+          putf_debug("Reading index file",  "", "")
           records = Forecaster.configuration.records.values
           ranges = forecast.fetch_ranges
           ranges = records.map { |k| ranges[k] } # Filter ranges
@@ -173,8 +172,8 @@ module Forecaster
           filesize = ranges.reduce(0) do |acc, (first, last)|
             acc + last - first # FIXME: `last == nil` on last range of index file
           end
-          filesize_in_megabytes = (filesize.to_f / (1 << 20)).round(2)
-          puts "Length: #{filesize} (#{filesize_in_megabytes}M)"
+          n = (filesize.to_f / (1 << 20)).round(2)
+          putf_debug("Length", filesize, "%d (%.2fM)", optional: n)
           puts
 
           progressbar = ProgressBar.create(
@@ -201,38 +200,62 @@ module Forecaster
 
     # Print forecast
     def print_forecast(forecast, lat, lon)
-      forecast_time = forecast.time.localtime
+      putf("Date", forecast.time.localtime.strftime("%Y-%m-%d"), "%s")
+      putf("Time", forecast.time.localtime.strftime("%T"),       "%s")
+      putf("Zone", forecast.time.localtime.strftime("%z"),       "%s")
 
-      puts format("  %-11s % 11s", "Date:", forecast_time.strftime("%Y-%m-%d"))
-      puts format("  %-11s % 11s", "Time:", forecast_time.strftime("%T"))
-      puts format("  %-11s % 11s", "Zone:", forecast_time.strftime("%z"))
-      puts format(FORECAST_FORMAT, "Latitude:",  lat, "°")
-      puts format(FORECAST_FORMAT, "Longitude:", lon, "°")
+      # Coordinates rounded to the precision of the GFS model
+      putf("Latitude",  (lat / 0.25).round / 4.0, "%05.2f °")
+      putf("Longitude", (lon / 0.25).round / 4.0, "%05.2f °")
       puts
 
-      pres  = forecast.read(:pres,  :latitude => lat, :longitude => lon).to_f
       tmp   = forecast.read(:tmp,   :latitude => lat, :longitude => lon).to_f
       ugrd  = forecast.read(:ugrd,  :latitude => lat, :longitude => lon).to_f
       vgrd  = forecast.read(:vgrd,  :latitude => lat, :longitude => lon).to_f
       prate = forecast.read(:prate, :latitude => lat, :longitude => lon).to_f
       rh    = forecast.read(:rh,    :latitude => lat, :longitude => lon).to_f
       tcdc  = forecast.read(:tcdc,  :latitude => lat, :longitude => lon).to_f
+      pres  = forecast.read(:pres,  :latitude => lat, :longitude => lon).to_f
 
-      pressure       = pres / 100.0
       temperature    = tmp - 273.15
-      wind_speed     = Math.sqrt(ugrd**2 + vgrd**2)
       wind_direction = (270 - Math.atan2(ugrd, vgrd) * 180 / Math::PI) % 360
+      wind_speed     = Math.sqrt(ugrd**2 + vgrd**2)
       precipitation  = prate * 3600
       humidity       = rh
       cloud_cover    = tcdc
+      pressure       = pres / 100.0
 
-      puts format(FORECAST_FORMAT, "Pressure:",       pressure,       "hPa")
-      puts format(FORECAST_FORMAT, "Temperature:",    temperature,    "°C")
-      puts format(FORECAST_FORMAT, "Wind Direction:", wind_direction, "°")
-      puts format(FORECAST_FORMAT, "Wind Speed:",     wind_speed,     "m/s")
-      puts format(FORECAST_FORMAT, "Precipitation:",  precipitation,  "mm")
-      puts format(FORECAST_FORMAT, "Humidity:",       humidity,       "%")
-      puts format(FORECAST_FORMAT, "Cloud Cover:",    cloud_cover,    "%")
+      wdir = compass_rose(wind_direction)
+
+      putf("Temperature",   temperature,   "%.0f °C")
+      putf("Wind",          wind_speed,    "%.1f m/s (%s)", optional: wdir)
+      putf("Precipitation", precipitation, "%.1f mm")
+      putf("Humidity",      humidity,      "%.0f %")
+      putf("Cloud Cover",   cloud_cover,   "%.0f %")
+      putf("Pressure",      pressure,      "%.0f hPa")
+    end
+
+    def putf(name, value, fmt, optional: "", color: :cyan)
+      left_column = Rainbow(format("  %-20s", name)).color(color)
+      right_column = Rainbow(format(fmt, value, optional))
+      puts "#{left_column} #{right_column}"
+    end
+
+    def putf_debug(name, value, fmt, optional: "")
+      putf(name, value, fmt, optional: optional, color: :yellow)
+    end
+
+    def compass_rose(degree)
+      case degree
+      when   0...45  then "N"
+      when  45...90  then "NE"
+      when  90...135 then "E"
+      when 135...180 then "SE"
+      when 180...225 then "S"
+      when 225...270 then "SW"
+      when 270...315 then "W"
+      else                "NW"
+      end
     end
 
     def geolocalize(location)
