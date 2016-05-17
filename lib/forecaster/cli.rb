@@ -227,8 +227,8 @@ module Forecaster
 
       puts format(FORECAST_FORMAT, "Pressure:",       pressure,       "hPa")
       puts format(FORECAST_FORMAT, "Temperature:",    temperature,    "°C")
-      puts format(FORECAST_FORMAT, "Wind Speed:",     wind_speed,     "m/s")
       puts format(FORECAST_FORMAT, "Wind Direction:", wind_direction, "°")
+      puts format(FORECAST_FORMAT, "Wind Speed:",     wind_speed,     "m/s")
       puts format(FORECAST_FORMAT, "Precipitation:",  precipitation,  "mm")
       puts format(FORECAST_FORMAT, "Humidity:",       humidity,       "%")
       puts format(FORECAST_FORMAT, "Cloud Cover:",    cloud_cover,    "%")

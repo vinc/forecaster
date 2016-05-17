@@ -102,8 +102,8 @@ Forecaster has a command line tool that try to be smart:
 
       Pressure:        1013.8 hPa
       Temperature:       21.7 °C
-      Wind Speed:         8.0 m/s
       Wind Direction:   163.5 °
+      Wind Speed:         8.0 m/s
       Precipitation:      0.0 mm
       Humidity:          65.1 %
       Cloud Cover:        0.0 %
@@ -135,8 +135,8 @@ But you can use it in a more verbose way:
 
       Pressure:        1013.5 hPa
       Temperature:       13.4 °C
-      Wind Speed:         1.0 m/s
       Wind Direction:   167.3 °
+      Wind Speed:         1.0 m/s
       Precipitation:      0.0 mm
       Humidity:          89.7 %
       Cloud Cover:        0.0 %
