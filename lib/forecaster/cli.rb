@@ -166,11 +166,12 @@ module Forecaster
           puts "Downloading: '#{forecast.url}'"
 
           puts "Reading index file..."
-          ranges = forecast.fetch_index
+          records = Forecaster.configuration.records.values
+          ranges = forecast.fetch_ranges
+          ranges = records.map { |k| ranges[k] } # Filter ranges
 
-          filesize = ranges.reduce(0) do |acc, range|
-            first, last = range.split("-").map(&:to_i)
-            acc + last - first
+          filesize = ranges.reduce(0) do |acc, (first, last)|
+            acc + last - first # FIXME: `last == nil` on last range of index file
           end
           filesize_in_megabytes = (filesize.to_f / (1 << 20)).round(2)
           puts "Length: #{filesize} (#{filesize_in_megabytes}M)"
