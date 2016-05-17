@@ -12,7 +12,7 @@ module Forecaster
       # takes approximately 3 to 5 hours before a run is available online, so
       # to be on the safe side we return the previous one.
       now = Time.now.utc
-      run = Time.new(now.year, now.month, now.day, (now.hour / 6) * 6)
+      run = Time.utc(now.year, now.month, now.day, (now.hour / 6) * 6)
 
       run - 6 * 3600
     end
@@ -20,8 +20,8 @@ module Forecaster
     def self.at(time)
       # There is a forecast every 3 hours after a run for 384 hours.
       t = time.utc
-      fct = Time.new(t.year, t.month, t.day, (t.hour / 3) * 3)
-      run = Time.new(t.year, t.month, t.day, (t.hour / 6) * 6)
+      fct = Time.utc(t.year, t.month, t.day, (t.hour / 3) * 3)
+      run = Time.utc(t.year, t.month, t.day, (t.hour / 6) * 6)
       run -= 6 * 3600 if run == fct
 
       last_run = Forecast.last_run_at
