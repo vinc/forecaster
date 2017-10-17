@@ -118,11 +118,20 @@ RSpec.describe Forecaster do
 
     it "fetches byte ranges from an index file" do
       forecast = Forecaster::Forecast.new(@y, @m, @d, @c, @h)
-      ranges = forecast.fetch_ranges
 
-      expect(ranges[":UGRD:planetary boundary layer:"][0]).to eq(0)
-      expect(ranges[":TMP:2 m above ground:"].size).to eq(2)
-      expect(ranges[":5WAVH:500 mb:"].size).to eq(1)
+      ranges = forecast.fetch_ranges
+      expect(ranges).to have_key(":TMP:2 m above ground:")
+
+      range = ranges[":TMP:2 m above ground:"]
+      expect(range.size).to be_between(1, 2)
+      first_byte, last_byte = range
+      expect(first_byte).to be_an(Integer)
+      case range.size
+      when 1
+        expect(last_byte).to be_nil
+      when 2
+        expect(last_byte).to be_an(Integer)
+      end
     end
   end
 end
