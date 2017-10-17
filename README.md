@@ -1,6 +1,9 @@
 Forecaster
 ==========
 
+[![Gem](https://img.shields.io/gem/v/forecaster.svg)](https://rubygems.org/gems/forecaster)
+[![Travis branch](https://img.shields.io/travis/vinc/forecaster/master.svg)](https://travis-ci.org/vinc/forecaster/branches)
+
 Ruby wrapper around `wgrib2` to fetch and read data from the Global Forecast
 System (GFS).
 
