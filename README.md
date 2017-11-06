@@ -8,6 +8,8 @@ Forecaster
 Ruby wrapper around `wgrib2` to fetch and read data from the Global Forecast
 System (GFS).
 
+[![asciicast](https://asciinema.org/a/146117.png)](https://asciinema.org/a/146117)
+
 
 Installation
 ------------
