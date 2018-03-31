@@ -14,13 +14,7 @@ Gem::Specification.new do |s|
   s.authors     = [
     "Vincent Ollivier"
   ]
-  s.files       = [
-    "lib/forecaster.rb",
-    "lib/forecaster/cli.rb",
-    "lib/forecaster/configuration.rb",
-    "lib/forecaster/forecast.rb",
-    "lib/forecaster/version.rb"
-  ]
+  s.files       = Dir.glob("{bin,lib}/**/*.rb") + %w[LICENSE README.md]
   s.executables << "forecast"
   s.add_runtime_dependency("chronic",          "~> 0.10", ">= 0.10.0")
   s.add_runtime_dependency("excon",            "~> 0.49", ">= 0.49.0")
