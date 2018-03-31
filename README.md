@@ -2,7 +2,9 @@ Forecaster
 ==========
 
 [![Gem](https://img.shields.io/gem/v/forecaster.svg)](https://rubygems.org/gems/forecaster)
-[![Travis branch](https://img.shields.io/travis/vinc/forecaster/master.svg)](https://travis-ci.org/vinc/forecaster/branches)
+[![Build Status](https://api.travis-ci.org/vinc/forecaster.svg?branch=master)](http://travis-ci.org/vinc/forecaster)
+[![Code Climate](https://codeclimate.com/github/vinc/forecaster.svg)](https://codeclimate.com/github/vinc/forecaster)
+[![Code Coverage](https://codecov.io/gh/vinc/forecaster/branch/master/graph/badge.svg)](https://codecov.io/gh/vinc/forecaster)
 [![Gemnasium](https://img.shields.io/gemnasium/vinc/forecaster.svg)](https://gemnasium.com/github.com/vinc/forecaster)
 
 Ruby wrapper around `wgrib2` to read data directly from the Global Forecast
