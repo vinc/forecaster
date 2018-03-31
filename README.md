@@ -7,8 +7,12 @@ Forecaster
 [![Code Coverage](https://codecov.io/gh/vinc/forecaster/branch/master/graph/badge.svg)](https://codecov.io/gh/vinc/forecaster)
 [![Gemnasium](https://img.shields.io/gemnasium/vinc/forecaster.svg)](https://gemnasium.com/github.com/vinc/forecaster)
 
-Ruby wrapper around `wgrib2` to read data directly from the Global Forecast
-System (GFS).
+[Forecaster](https://github.com/vinc/forecaster) is a gem wrapping `wgrib2` to
+fetch and read weather data directly from the Global Forecast System.
+
+It comes with a library and a CLI allowing you to type commands like `forecast
+for this afternoon in paris` in your terminal to get the latest weather
+forecast.
 
 [![asciicast](https://asciinema.org/a/146117.png)](https://asciinema.org/a/146117)
 
