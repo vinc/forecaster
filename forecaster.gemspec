@@ -1,10 +1,14 @@
+lib = File.expand_path("../lib", __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require "forecaster/version"
+
 Gem::Specification.new do |s|
   s.name        = "forecaster"
-  s.version     = "0.1.0"
-  s.date        = "2016-06-11"
+  s.version     = Forecaster::VERSION
   s.license     = "MIT"
-  s.summary     = "Wrapper around curl and wgrib2 to fetch and read GFS data"
-  s.description = s.summary
+  s.summary     = "Wrapper around wgrib2 to read data from the GFS"
+  s.description = "Wrapper around wgrib2 to read data directly from the Global Forecast System"
   s.homepage    = "https://github.com/vinc/forecaster"
   s.email       = "v@vinc.cc"
   s.authors     = [
@@ -18,13 +22,13 @@ Gem::Specification.new do |s|
     "lib/forecaster/version.rb"
   ]
   s.executables << "forecast"
-  s.add_development_dependency("rspec",        "~> 3.4",  ">= 3.4.0")
-  s.add_development_dependency("timecop",      "~> 0.8",  ">= 0.8.0")
+  s.add_development_dependency("rspec",        "~> 3.7",  ">= 3.7.0")
+  s.add_development_dependency("timecop",      "~> 0.9",  ">= 0.9.0")
   s.add_runtime_dependency("chronic",          "~> 0.10", ">= 0.10.0")
   s.add_runtime_dependency("excon",            "~> 0.49", ">= 0.49.0")
   s.add_runtime_dependency("geocoder",         "~> 1.3",  ">= 1.3.0")
+  s.add_runtime_dependency("rainbow",          "~> 3.0",  ">= 3.0.0")
   s.add_runtime_dependency("ruby-progressbar", "~> 1.8",  ">= 1.8.0")
   s.add_runtime_dependency("timezone",         "~> 1.2",  ">= 1.2.0")
-  s.add_runtime_dependency("rainbow",          "~> 2.1",  ">= 2.1.0")
   s.add_runtime_dependency("trollop",          "~> 2.1",  ">= 2.1.0")
 end
