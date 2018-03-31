@@ -94,7 +94,7 @@ module Forecaster
 
     # Get location
     def get_location(opts, env)
-      if opts[:location]
+      if (opts[:location] || "").length > 0
         @store.transaction do
           if opts[:debug]
             putf_debug("Geolocalizing", opts[:location], "'%s'")

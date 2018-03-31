@@ -134,4 +134,14 @@ RSpec.describe Forecaster do
       end
     end
   end
+
+  describe Forecaster::CLI do
+    describe "#start" do
+      it "starts the CLI" do
+        args = %w[for this afternoon --latitude 48.75 --longitude 02.25]
+        env = { "TZ" => "Europe/Paris" }
+        expect { Forecaster::CLI.start(args, env) }.to output(/Latitude.*48\.75/).to_stdout
+      end
+    end
+  end
 end
