@@ -230,8 +230,8 @@ module Forecaster
       putf("Temperature",   temperature,   "%.0f °C")
       putf("Wind",          wind_speed,    "%.1f m/s (%s)", optional: wdir)
       putf("Precipitation", precipitation, "%.1f mm")
-      putf("Humidity",      humidity,      "%.0f %")
-      putf("Cloud Cover",   cloud_cover,   "%.0f %")
+      putf("Humidity",      humidity,      "%.0f %%")
+      putf("Cloud Cover",   cloud_cover,   "%.0f %%")
       putf("Pressure",      pressure,      "%.0f hPa")
     end
 
