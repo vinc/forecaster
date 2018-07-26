@@ -5,7 +5,6 @@ Forecaster
 [![Build Status](https://api.travis-ci.org/vinc/forecaster.svg?branch=master)](http://travis-ci.org/vinc/forecaster)
 [![Code Climate](https://codeclimate.com/github/vinc/forecaster.svg)](https://codeclimate.com/github/vinc/forecaster)
 [![Code Coverage](https://codecov.io/gh/vinc/forecaster/branch/master/graph/badge.svg)](https://codecov.io/gh/vinc/forecaster)
-[![Gemnasium](https://img.shields.io/gemnasium/vinc/forecaster.svg)](https://gemnasium.com/github.com/vinc/forecaster)
 
 [Forecaster](https://github.com/vinc/forecaster) is a gem wrapping `wgrib2` to
 fetch and read weather data directly from the Global Forecast System.
@@ -14,7 +13,7 @@ It comes with a library and a CLI allowing you to type commands like `forecast
 for this afternoon in paris` in your terminal to get the latest weather
 forecast.
 
-[![asciicast](https://asciinema.org/a/146117.png)](https://asciinema.org/a/146117)
+[![asciicast](https://asciinema.org/a/193637.png)](https://asciinema.org/a/193637)
 
 
 Installation
