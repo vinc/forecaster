@@ -1,5 +1,5 @@
 require "yaml/store"
-require "trollop"
+require "optimist"
 require "chronic"
 require "timezone"
 require "geocoder"
@@ -35,7 +35,7 @@ module Forecaster
 
       lat, lon = get_location(opts, env)
 
-      Trollop.die("Could not parse location") if lat.nil? || lon.nil?
+      Optimist.die("Could not parse location") if lat.nil? || lon.nil?
 
       ENV["TZ"] = get_timezone(lat, lon, env) || env["TZ"]
       time = get_time(opts)
@@ -46,7 +46,7 @@ module Forecaster
 
     # Parse command line options
     def parse(args)
-      opts = Trollop.options(args) do
+      opts = Optimist.options(args) do
         usage           "for <time> in <location>"
         version         "Forecaster v#{Forecaster::VERSION}"
         opt :time,      "Set time in any format",  :type => String
@@ -142,7 +142,7 @@ module Forecaster
       if opts[:time]
         # TODO: Look for a timestamp first
         time = Chronic.parse(opts[:time])
-        Trollop.die(:time, "could not be parsed") if time.nil?
+        Optimist.die(:time, "could not be parsed") if time.nil?
         time.utc
       else
         Time.now.utc
