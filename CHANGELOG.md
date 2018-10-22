@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2 (2018-10-22)
+
+- Rename `trollop` dependency to `optimist`
+- Rename "Cloud Cover" to "Nebulosity"
+
 ## 1.0.1 (2018-07-26)
 
 - Fix `format` error
