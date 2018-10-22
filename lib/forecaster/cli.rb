@@ -222,17 +222,17 @@ module Forecaster
       wind_speed     = Math.sqrt(ugrd**2 + vgrd**2)
       precipitation  = prate * 3600
       humidity       = rh
-      cloud_cover    = tcdc
+      nebulosity     = tcdc
       pressure       = pres / 100.0
 
       wdir = compass_rose(wind_direction)
 
-      putf("Temperature",   temperature,   "%.0f °C")
-      putf("Wind",          wind_speed,    "%.1f m/s (%s)", optional: wdir)
-      putf("Precipitation", precipitation, "%.1f mm")
-      putf("Humidity",      humidity,      "%.0f %%")
-      putf("Cloud Cover",   cloud_cover,   "%.0f %%")
       putf("Pressure",      pressure,      "%.0f hPa")
+      putf("Temperature",   temperature,   "%.0f °C")
+      putf("Nebulosity",    nebulosity,    "%.0f %%")
+      putf("Humidity",      humidity,      "%.0f %%")
+      putf("Precipitation", precipitation, "%.1f mm")
+      putf("Wind",          wind_speed,    "%.1f m/s (%s)", optional: wdir)
     end
 
     def putf(name, value, fmt, optional: "", color: :cyan)

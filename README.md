@@ -119,11 +119,10 @@ Forecaster has a command line tool that try to be smart:
 
       Pressure:        1013.8 hPa
       Temperature:       21.7 °C
-      Wind Direction:   163.5 °
-      Wind Speed:         8.0 m/s
-      Precipitation:      0.0 mm
+      Nebulosity:         0.0 %
       Humidity:          65.1 %
-      Cloud Cover:        0.0 %
+      Precipitation:      0.0 mm
+      Wind:               8.0 m/s (NE)
 
 But you can use it in a more verbose way:
 
@@ -152,11 +151,10 @@ But you can use it in a more verbose way:
 
       Pressure:        1013.5 hPa
       Temperature:       13.4 °C
-      Wind Direction:   167.3 °
-      Wind Speed:         1.0 m/s
-      Precipitation:      0.0 mm
+      Nebulosity:         0.0 %
       Humidity:          89.7 %
-      Cloud Cover:        0.0 %
+      Precipitation:      0.0 mm
+      Wind:               1.0 m/s (NE)
 
 To use automatically the timezone of a location you will need to create
 a free [GeoNames account][3] and export your username in an environment
