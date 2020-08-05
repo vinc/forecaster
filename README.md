@@ -38,7 +38,7 @@ system.
 To install the `wgrib2` from source:
 
 ```bash
-wget http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
+wget https://ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
 tar -xzvf wgrib2.tgz
 cd grib2
 export CC=gcc

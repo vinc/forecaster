@@ -5,7 +5,7 @@ require "excon"
 module Forecaster
   # Fetch and read a specific forecast from a GFS run.
   #
-  # See: http://www.nco.ncep.noaa.gov/pmb/products/gfs/
+  # See: https://www.nco.ncep.noaa.gov/pmb/products/gfs/
   class Forecast
     def self.last_run_at
       # There is a new GFS run every 6 hours starting at midnight UTC, and it

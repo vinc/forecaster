@@ -6,7 +6,7 @@ language: ruby
 script: bundle exec rspec spec
 before_install:
   - sudo apt-get install make gcc gfortran
-  - curl -o wgrib2.tgz http://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
+  - curl -o wgrib2.tgz https://ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz
   - tar -xzvf wgrib2.tgz
   - cd grib2
   - export CC=gcc
