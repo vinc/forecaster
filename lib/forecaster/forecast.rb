@@ -61,7 +61,7 @@ module Forecaster
 
     def url
       server = Forecaster.configuration.server
-      subdir = format("gfs.%04d%02d%02d%02d", @year, @month, @day, @run_hour)
+      subdir = format("gfs.%04d%02d%02d/%02d", @year, @month, @day, @run_hour)
       format("%s/%s/%s", server, subdir, filename)
     end
 

@@ -5,7 +5,7 @@ module Forecaster
     attr_accessor :server, :cache_dir, :curl_path, :wgrib2_path, :records
 
     def initialize
-      @server = "http://www.ftp.ncep.noaa.gov/data/nccf/com/gfs/prod"
+      @server = "https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod"
       @cache_dir = "/tmp/forecaster"
       @wgrib2_path = "wgrib2"
 
