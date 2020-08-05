@@ -47,8 +47,10 @@ module Forecaster
     # Parse command line options
     def parse(args)
       opts = Optimist.options(args) do
-        usage           "for <time> in <location>"
         version         "Forecaster v#{Forecaster::VERSION}"
+        banner          "Usage: forecast for <time> in <location>"
+        banner          ""
+        banner          "Options:"
         opt :time,      "Set time in any format",  :type => String
         opt :location,  "Set location name",       :type => String
         opt :latitude,  "Set latitude in degree",  :type => Float, :short => "a"
