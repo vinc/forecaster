@@ -51,7 +51,7 @@ module Forecaster
     end
 
     def dirname
-      subdir = format("%04d%02d%02d%02d", @year, @month, @day, @run_hour)
+      subdir = format("%04d%02d%02d/%02d", @year, @month, @day, @run_hour)
       File.join(Forecaster.configuration.cache_dir, subdir)
     end
 
