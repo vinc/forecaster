@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency("geocoder",         "~> 1.8",  ">= 1.8.0")
   s.add_runtime_dependency("optimist",         "~> 3.0",  ">= 3.0.0")
   s.add_runtime_dependency("rainbow",          "~> 3.0",  ">= 3.0.0")
-  s.add_runtime_dependency("ruby-progressbar", "~> 1.8",  ">= 1.8.0")
+  s.add_runtime_dependency("ruby-progressbar", "~> 1.13", ">= 1.13.0")
   s.add_runtime_dependency("timezone",         "~> 1.2",  ">= 1.2.0")
   s.add_development_dependency("codecov",      "~> 0.1",  ">= 0.1.10")
   s.add_development_dependency("rspec",        "~> 3.7",  ">= 3.7.0")
