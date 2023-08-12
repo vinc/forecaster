@@ -61,9 +61,9 @@ Forecaster.configure do |config|
   config.wgrib2_path = "/usr/local/bin/wgrib2"
   config.cache_dir = "/tmp/forecaster"
   config.records = {
-    :temperature => ":TMP:2 m above ground:",
-    :humidity    => ":RH:2 m above ground:",
-    :pressure    => ":PRES:surface:"
+    temperature: ":TMP:2 m above ground:",
+    humidity:    ":RH:2 m above ground:",
+    pressure:    ":PRES:surface:"
   }
 end
 ```
@@ -99,7 +99,7 @@ res = forecast.read(:temperature, longitude: 48.1147, latitude: -1.6794) # Strin
 val = res.to_f - 273.15 # Float in degree Celsius
 ```
 
-[1]: http://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs_upgrade/gfs.t06z.pgrb2.0p25.f006.shtml
+[1]: https://www.nco.ncep.noaa.gov/pmb/products/gfs/gfs.t00z.pgrb2.0p25.f003.shtml
 [2]: http://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/
 
 
