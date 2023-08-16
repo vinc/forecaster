@@ -27,7 +27,7 @@ RSpec.describe Forecaster do
     wgrib2_path = Forecaster.configuration.wgrib2_path
     out = `#{wgrib2_path} -version`
 
-    expect(out).to start_with("v0.2")
+    expect(out).to start_with("v3.1")
   end
 
   it "fetches a forecast" do
