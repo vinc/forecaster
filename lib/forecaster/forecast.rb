@@ -19,8 +19,10 @@ module Forecaster
 
     def self.at(time)
       # There is a forecast every 3 hours after a run for 384 hours.
+      # On NOMADS server there also an hourly forecast up to 120 hours.
       t = time.utc
-      fct = Time.utc(t.year, t.month, t.day, (t.hour / 3) * 3)
+      n = Forecaster.configuration.frequency # 1 or 3
+      fct = Time.utc(t.year, t.month, t.day, (t.hour / n) * n)
       run = Time.utc(t.year, t.month, t.day, (t.hour / 6) * 6)
       run -= 6 * 3600 if run == fct
 
@@ -29,7 +31,8 @@ module Forecaster
 
       fct_hour = (fct - run) / 3600
 
-      raise "Time too far in the future" if fct_hour > 384
+      max = n == 1 ? 120 : 384
+      raise "Time too far in the future" if fct_hour > max
 
       Forecast.new(run.year, run.month, run.day, run.hour, fct_hour)
     end

@@ -2,10 +2,13 @@
 module Forecaster
   # Configure how to fetch and read from a forecast file.
   class Configuration
-    attr_accessor :server, :cache_dir, :curl_path, :wgrib2_path, :records
+    attr_accessor :server, :frequency, :cache_dir, :curl_path, :wgrib2_path, :records
 
     def initialize
+      #@server = "https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod"
+      #@frequency = 1
       @server = "https://ftp.ncep.noaa.gov/data/nccf/com/gfs/prod"
+      @frequency = 3
       @cache_dir = "/tmp/forecaster"
       @wgrib2_path = "wgrib2"
 
