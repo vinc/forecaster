@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.files       = Dir.glob("{bin,lib}/**/*.rb") + %w[LICENSE README.md CHANGELOG.md]
   s.executables << "forecast"
   s.add_runtime_dependency("chronic",          "~> 0.10", ">= 0.10.0")
-  s.add_runtime_dependency("excon",            "~> 0.49", ">= 0.49.0")
+  s.add_runtime_dependency("excon",            ">= 0.49", "< 2.0")
   s.add_runtime_dependency("geocoder",         "~> 1.8",  ">= 1.8.0")
   s.add_runtime_dependency("optimist",         "~> 3.0",  ">= 3.0.0")
   s.add_runtime_dependency("rainbow",          "~> 3.0",  ">= 3.0.0")
